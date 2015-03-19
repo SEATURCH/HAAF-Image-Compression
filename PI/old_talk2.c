@@ -59,45 +59,35 @@ RPI_BPLUS_GPIO_J8_11
 #define DEFAULT_WIDTH 320
 #define DEFAULT_HEIGHT 240
 #define DEFAULT_YUV420_SIZE (DEFAULT_WIDTH*DEFAULT_HEIGHT*3)/2
+#define FILENAME "/home/pi/Desktop/sprint1.yuv"
 
-char unsigned test[]  = "This";
-
-// Sample data: Since sending 8 bits at a time, can store as chars
 unsigned char receivedBuffer[DEFAULT_YUV420_SIZE];
-//unsigned char sendBuffer[] = "P0Al8E3QBmCAyeEp2Uq90MUmONbL2GN51FTBuO0mB8O2Kskrp301H7M2bukm12R3nEoiMzTY5mBmimZtULMZC7W2hW4DtpFsVTVI7Hx6JR5RmmpaJ6vS57yZsJIsom5ghwRYiX6s40fyvMDe0zbHLZba9yhwZg70N4cslhi9jzZySp7to47mhRHEVksNy7ik5KTv16kSNoLS5xP4e7LWEvXrMoa4gODjBzPX1KEzc7wPbeEuBYtR16AWIjnV7HpGNktKCZjlkmUVGeyRlXj6vPsTo2xgYj24hc5nB9p9hVpBBuLi0f3YMsSLw5U5pL7REi2QuK0JE3Et34XRjlEgZrcvnkeAxKHnxXZoZ1v6CQSc72slE6i1qoRweUJoOv0wQ1lUXx8w8OJHIeLD7H5iCNmSQwF5a4SQCzVXrgWj6KctJAJJF3EPWyRA7kAMYmN0fZbwNJtkhCONACCmznTyp2u2GDVD4qSPaJaCEThH5KFQML9YuMxfKCMRVVYPj9IUJe0SrpqLStezc3YbQR6t2xZYhlOeYYMiHax71GVtwg7psApQkh6uI4qFwM3yXw75iLbONVg2hbmHy5R8Tsn2n9zkufGhS4TUEE784ZJ52ceNF1Ebgu8LCbaKPBusS20hllp2bDFfMBw0sxCsGByNTpLMls82kbBhho5f0sjkKFD6mfC0bj1PAziyFs9VMIWneBU3tqQMMWg3swDtoiurF77UOAkLMlCoRzxJLBCx4OJkSL5NhL4qDLYchfyrPo0rWYpeWnT6MgEtl4gGcKhN2xalmz1k8rsZpirjED5anKFAWmYGT45u8FHVe7ktHL2aIhG2QsYWEQckg4lZDkrZJEb7DW66kUgHe0MaPwYwuIjTPs4fU2E0bMfpiqzCLQ7ratPc2pgPlb91kTKAX9v4EZTuNwF0Q3OEui52nTNP7Kfzxg0q3wRKbMpeHAi02tS9xBy1Oypgbmzx9msFPempW0cEvYPMtgtK4prWGUxl";
+
 unsigned char sendBuffer[DEFAULT_YUV420_SIZE];
 
 
 void Receive(unsigned char* receive) {
 	
-	int i = 0,index = 0;
+	int index = 0;
 	uint32_t * addr = bcm2835_gpio + BCM2835_GPLEV0/4;
-		   
-	while(i <TOTAL_KB){                                                 
+                                             
 		while (index < DEFAULT_YUV420_SIZE) {
-		//	if(DEBUG) printf("%d [waiting for data to be written...]\n", index);
+
 			while(bcm2835_gpio_lev(READ) != HIGH);
 			
 			
 			receive[index] = (unsigned char) (*addr >> 2);
-		//	if(DEBUG) printf("[Receiving...]");
-		
-	//		if(DEBUG) printf("%c\n", receive[index]);
+
 			bcm2835_gpio_write(WRITE, HIGH);
 			while(bcm2835_gpio_lev(READ) != LOW);
 			bcm2835_gpio_write(WRITE, LOW);
 			index++;
 		}
-		index = 0;
-		i++;
-	}
 }
 
 void Send(unsigned char* send) {
-	int i = 0,index = 0, len;
-	uint32_t * addr = bcm2835_gpio + BCM2835_GPLEV0/4;
-	//addr += 0x01;
-	while(i <TOTAL_KB){  
+	int index = 0, len;
+
 		while (index < DEFAULT_YUV420_SIZE) {
 			while(bcm2835_gpio_lev(READ) != LOW);
 			len = 7;
@@ -105,36 +95,38 @@ void Send(unsigned char* send) {
 				bcm2835_gpio_write(OUT[len], ((send[index] >> len) & 0x01));
 			len--;
 			}
-	
-	//*addr = send[index] << 10;	
-	//	printf("2addr = %x\n",  *addr);
+
 			bcm2835_gpio_write(WRITE, HIGH);
-		//	if(DEBUG) printf("[waiting for %c to be read...]\n", send[index]);
+
 			while(bcm2835_gpio_lev(READ) != HIGH);
 			bcm2835_gpio_write(WRITE, LOW);
 			
 			index++;
 		}
-		index = 0;
-		i++;
-	}
 }
 
-void writeToYuv(unsigned char* received)
+void writeToYuv(unsigned char* received, int size)
 {
 	FILE *fp;
-	fp = fopen("/home/pi/Desktop/car.bin", "w+");
-	fwrite(received, 1, sizeof(received), fp);
+	fp = fopen("/home/pi/Desktop/car.yuv", "w+");
+	fwrite(received, 1, size, fp);
 	fclose(fp);
 }
 
-
+void initialize_pins_IO(){
+	int i;
+	for(i = 0; i < 8; i++){
+    bcm2835_gpio_fsel(IN[i], BCM2835_GPIO_FSEL_INPT);
+    bcm2835_gpio_fsel(OUT[i], BCM2835_GPIO_FSEL_OUTP);
+	}
+    
+    bcm2835_gpio_fsel(READ, BCM2835_GPIO_FSEL_INPT);    
+    bcm2835_gpio_fsel(WRITE, BCM2835_GPIO_FSEL_OUTP);
+}
 int main(int argc, char **argv)
 {
-	
-	int size = DEFAULT_YUV420_SIZE;
-		char cmd[100];
-	/*
+
+	char *name = FILENAME;
 	char cmd[100];
 	int size = DEFAULT_YUV420_SIZE;
 	
@@ -144,69 +136,38 @@ int main(int argc, char **argv)
  	}
 	
 	
-	sprintf(cmd, "ls %s | jpeg2yuv -f 25 -I p | tail -n +3 > /home/pi/Desktop/result.yuv", argv[1]);
+	sprintf(cmd, "ls %s | jpeg2yuv -f 25 -I p | tail -n +3 > %s", argv[1], name);
 	printf("%s\n", cmd);
-	//system("ls /home/pi/Desktop/sample.jpeg | jpeg2yuv -f 25 -I p | tail -n +3 > /home/pi/Desktop/result_sample.yuv");
-*/
-/*
-	system("ls /home/pi/Desktop/sample.jpeg | /usr/local/lib/jpeg2yuv");
+	system(cmd);
 
 	return 0;
-	*/
+
 	FILE *fp;
-	fp = fopen("/home/pi/Desktop/sample2.yuv", "rb");
+	fp = fopen(name, "rb");
 	fread(sendBuffer, 1, size, fp);
 	fclose(fp);
-//	printf("%s\n", sendBuffer);
-//	writeToYuv(sendBuffer);
-//	return 0;
+
+	if (!bcm2835_init()){
 	
-	if (!bcm2835_init())
-	return 1;
+		printf("ERROR! intializing BCM2835\n");
+		return 1; 
 
-	// Set the pin to be an input
-    bcm2835_gpio_fsel(IN[0], BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(IN[1], BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(IN[2], BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(IN[3], BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(IN[4], BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(IN[5], BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(IN[6], BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(IN[7], BCM2835_GPIO_FSEL_INPT);
-    
-    bcm2835_gpio_fsel(READ, BCM2835_GPIO_FSEL_INPT);
-    
-    
-    // Set the pin to be an output
-    bcm2835_gpio_fsel(OUT[0], BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_fsel(OUT[1], BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_fsel(OUT[2], BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_fsel(OUT[3], BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_fsel(OUT[4], BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_fsel(OUT[5], BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_fsel(OUT[6], BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_fsel(OUT[7], BCM2835_GPIO_FSEL_OUTP);
-    
-    bcm2835_gpio_fsel(WRITE, BCM2835_GPIO_FSEL_OUTP);
+	}
 
-    bcm2835_gpio_write(WRITE, LOW);
-
-
-//	Send(sendBuffer);
+    bcm2835_gpio_write(WRITE, LOW); // initial state of handshake communication protocol
 
 	clock_t start , end;
 	start = clock();
 	Send(sendBuffer);
 	printf("send done\n");
 	Receive(receivedBuffer);
-	//Send(sendBuffer);
 	end = clock();
-	//printf("receive done\n");
+	printf("receive done\n");
 	printf("time taken = %.2f\n", (double)(end - start)/(double)CLOCKS_PER_SEC);
-//Receive(receivedBuffer);
-//	printf("send %s\n", sendBuffer);
-//	printf("received %s\n", receivedBuffer);
-	writeToYuv(receivedBuffer);
+
+	
+	writeToYuv(receivedBuffer, sizeof(receivedBuffer));
+	
 	bcm2835_close();
 	
 	return 0;

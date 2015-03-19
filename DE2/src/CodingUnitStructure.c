@@ -2,8 +2,8 @@
 
 #include "stdio.h"
 #include "stdlib.h"
-#include "CodingUnitStructure.h"
-#include "Transform.h"
+#include "../include/CodingUnitStructure.h"
+#include "../include/Transform.h"
 
 /*** PREDICTION ***/
 

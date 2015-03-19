@@ -34,7 +34,7 @@
 // THIS CODE IS BORROWED FROM THE http://hevc.kw.bbc.co.uk/svn/jctvc-a124/trunk/source/Lib/TLibCommon/TComTrQuant.cpp FILE FROM THE HM H265 CODEC
 
 
-#include "Transform.h"
+#include "../include/Transform.h"
 #include <string.h>
 
 void InitConvertToBit(char *g_aucConvertToBit)

@@ -4,10 +4,10 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "Utility.h"
-#include "CodingUnitStructure.h"
-#include "Transform.h"
-#include "Encode.h"
+#include "../include/Utility.h"
+#include "../include/CodingUnitStructure.h"
+#include "../include/Transform.h"
+#include "../include/Encode.h"
 
 
 #include <time.h>
@@ -18,11 +18,9 @@
 #define de2Output (char *)RASP_OUTPUT_BASE			// 8 bits of GPIO output to PI
 #define recieveMode (char *) RECIEVE_MODE_BASE		// Signal input from PI, indicator for DE2 that it will receive from PI and run receiving algorithm
 #define sendMode (char *) SEND_MODE_BASE			// Signal output to PI, indicator to PI that it will reeive from DE2 and run its receiving algorithm
-#define WRITE (char *) READY_SEND_BASE			// Signal output to PI, indicator to PI that DE2 is ready to receive new data
-#define READ (char *) READY_READ_BASE			// Signal input from PI, indicator for DE2 that new data from PI ready to be read
+#define WRITE (char *) READY_SEND_BASE				// Signal output to PI, indicator to PI that DE2 is ready to receive new data
+#define READ (char *) READY_READ_BASE				// Signal input from PI, indicator for DE2 that new data from PI ready to be read
 #define BUFFERSIZE PICTURE_YUV420_SIZE
-#define TOTAL_KB 1
-#define DEBUG 0
 
 //Parse the yuv file
 void OpenYUVFileIntoInputPicture(BufferDescriptor_t* inputPicture, const char* filename, int width, int height){
@@ -118,50 +116,30 @@ void SetYUVSamplesToValue(BufferDescriptor_t *inputPicture)
 
 
 void Receive(unsigned char* receive) {
-	int i = 0, index = 0;
-	while(i < TOTAL_KB){
+	int index = 0;
 		while (index < BUFFERSIZE) {
 
-		//		if(DEBUG)printf("%d [waiting for data to be written...]\n", index);
 				while(*READ != 0x1);
 				receive[index] = 0x0;
-		//		if(DEBUG)printf("[Receiving...]");
 				receive[index] = (*de2Input);
-		//		if(DEBUG)printf(" %c\n", receive[index]);
-				(*WRITE) = 0x1;		// Indicates to PI that DE2 is ready to recieve NEW data
+				(*WRITE) = 0x1;
 				while(*READ != 0x0);
 				*WRITE = 0x0;
 				index++;
 		}
-	index = 0;
-	i++;
-	}
 }
 
 // DE2 Sending, PI Reading
 void Send(unsigned char* send) {
-	int i = 0, index = 0;
-	while(i < TOTAL_KB){
+	int index = 0;
 		while (index < BUFFERSIZE) {
 			while(*READ != 0x0);
 			(*de2Output) = send[index];
 			*WRITE = 0x1;
-		//	if(DEBUG)printf("[waiting for %c to be read...]\n", send[index]);
 			while(*READ != 0x1);
 			*WRITE = 0x0;
 			index++;
 		}
-		index = 0;
-		i++;
-	}
-}
-
-
-void writeToYuv(unsigned char* received ){
-	FILE *fp;
-   fp = fopen("Cats_320x240_420.yuv", "w+");
-   fprintf(fp, "%s", received);
-   fclose(fp);
 }
 
 
@@ -170,12 +148,12 @@ int main(int argc, char* argv[])
 {
 	unsigned char receivedBuffer[BUFFERSIZE];
 	unsigned char sendBuffer[BUFFERSIZE];
+
 	*WRITE = 0x0;
     printf("Receiving \n");
 	Receive(receivedBuffer);
-	//writeToYuv(receivedBuffer);
-	//Send(sendBuffer);
 	printf("Recieve done \n");
+
 	CodingUnitStructure_t codingUnitStructure;
 
 	/*** INITIALIZATION ***/
@@ -195,10 +173,10 @@ int main(int argc, char* argv[])
 	
 	// Write the image back out to file
 	{
-		FILE* file_handler;
-		int bytesWritten;
+		//FILE* file_handler;
+		//int bytesWritten;
 
-		unsigned char blank[320*240] = {128};
+		//unsigned char blank[320*240] = {128};
 
 		//file_handler = fopen("C:\\ReconCats_320x240_420.yuv","wb");
 
@@ -228,7 +206,7 @@ int main(int argc, char* argv[])
 
 	/*** DECONSTRUCTION ***/
 	CodingUnitStructureDeconstructor(&codingUnitStructure);
-    printf("Done\n");
+
 
     printf("Sending\n");
     Send(sendBuffer);

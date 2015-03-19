@@ -1,4 +1,4 @@
-#include "Encode.h"
+#include "../include/Encode.h"
 
 
 // Copies the reference samples from inputY based on the CU's position.

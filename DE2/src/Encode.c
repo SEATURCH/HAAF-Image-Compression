@@ -111,12 +111,9 @@ int ComputeCost(
 	return cost;
 }
 
-
-
-
 void EncodeDecode(
 	// OUT
-	CuIntBuffer transformBuffer, 
+	CuIntBuffer transformBufferDWord, 
 	CuBuffer reconBuffer,
 	// IN
 	unsigned char *inputCU,
@@ -127,10 +124,10 @@ void EncodeDecode(
 	int codingUnitHeight,
 	int qp)
 {
-	CuBuffer predictionBuffer;
-	CuIntBuffer residualIntBuffer;
-	CuIntBuffer invTransformBuffer;
-	CuIntBuffer reconIntBuffer;
+	CuBuffer	predictionBuffer;
+	CuIntBuffer residualBufferDWord;
+	CuIntBuffer invTransformBufferDWord;
+	CuIntBuffer reconBufferDWord;
 
 	// Create prediction based off reference and predictionModeCursor
 	PredictionFuncPtrTable[predictionMode](
@@ -142,8 +139,8 @@ void EncodeDecode(
 	// ***32bits rather than 8bits are used for each sample from this point on.
 
 	// Calculate the residual from the prediction
-	CalculateResidualInt(
-		residualIntBuffer, 
+	CalculateResidualDWord(
+		residualBufferDWord, 
 		codingUnitWidth, 
 		inputCU, 
 		cuStride, 
@@ -154,14 +151,14 @@ void EncodeDecode(
 
 	// Transform
 	xTrMxN(
-		residualIntBuffer, 
-		transformBuffer, 
+		residualBufferDWord, 
+		transformBufferDWord, 
 		codingUnitWidth, 
 		codingUnitHeight);
 
 	// Quantize
 	QuantizationFuncPtrTable[QuantizeForward](
-		transformBuffer, 
+		transformBufferDWord, 
 		codingUnitWidth, 
 		codingUnitWidth, 
 		codingUnitHeight, 
@@ -175,7 +172,7 @@ void EncodeDecode(
 
 	// Inverse Quantize
 	QuantizationFuncPtrTable[QuantizeBackward](
-		transformBuffer, 
+		transformBufferDWord, 
 		codingUnitWidth, 
 		codingUnitWidth, 
 		codingUnitHeight, 
@@ -183,16 +180,16 @@ void EncodeDecode(
 
 	// Inverse Transform
 	xITrMxN(
-		transformBuffer, 
-		invTransformBuffer, 
+		transformBufferDWord, 
+		invTransformBufferDWord, 
 		codingUnitWidth, 
 		codingUnitHeight);
 	
 	// Add the prediction to the inverse transform to get the 'actual'
-	CalculateRecon32Bit(
-		reconIntBuffer, 
+	CalculateReconDWord(
+		reconBufferDWord, 
 		codingUnitWidth, 
-		invTransformBuffer, 
+		invTransformBufferDWord, 
 		codingUnitWidth, 
 		predictionBuffer, 
 		codingUnitWidth, 
@@ -200,8 +197,8 @@ void EncodeDecode(
 		codingUnitHeight);
 		
 	// Saturate the 32bit recon into 8 bits
-	Copy32BitTo8BitBuffer(
-		reconIntBuffer,
+	CopyDWordToByteBuffer(
+		reconBufferDWord,
 		reconBuffer,
 		(codingUnitWidth)*(codingUnitHeight));
 		
@@ -213,7 +210,7 @@ void EncodeCu(
 	int cuY)
 {
 	// Encode Buffers
-	CuIntBuffer transformBuffer;
+	CuIntBuffer transformBufferDWord;
 
 	// Decode Buffers (Mode Decision)
 	CuBuffer reconBuffer; // Will be compared to Actual Picture
@@ -281,7 +278,7 @@ void EncodeCu(
 
 		///***** ENCODING/DECODING *****/
 		EncodeDecode(
-			transformBuffer, 
+			transformBufferDWord, 
 			reconBuffer, 
 			inputY, 
 			yStride, 
@@ -312,7 +309,7 @@ void EncodeCu(
 
 			// Copy transform buffer into transform best buffer
 			CopyBlockByte(
-				(unsigned char *)transformBuffer, 
+				(unsigned char *)transformBufferDWord, 
 				CODING_UNIT_WIDTH * sizeof(int), 
 				transformBestY, 
 				transformStrideY, 
@@ -347,7 +344,7 @@ void EncodeCu(
 			CODING_UNIT_HEIGHT >> 1);
 
 		EncodeDecode(
-			transformBuffer, 
+			transformBufferDWord, 
 			reconBuffer, 
 			inputU, 
 			uStride, 
@@ -359,7 +356,7 @@ void EncodeCu(
 
 		// Copy transform buffer into transform best buffer
 		CopyBlockByte(
-			(unsigned char *)transformBuffer, 
+			(unsigned char *)transformBufferDWord, 
 			(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
 			transformBestU, 
 			transformStrideU, 
@@ -391,7 +388,7 @@ void EncodeCu(
 			CODING_UNIT_HEIGHT >> 1);
 
 		EncodeDecode(
-			transformBuffer, 
+			transformBufferDWord, 
 			reconBuffer, 
 			inputV, 
 			vStride, 
@@ -403,7 +400,7 @@ void EncodeCu(
 
 		// Copy transform buffer into transform best buffer
 		CopyBlockByte(
-			(unsigned char *)transformBuffer, 
+			(unsigned char *)transformBufferDWord, 
 			(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
 			transformBestV, 
 			transformStrideV, 

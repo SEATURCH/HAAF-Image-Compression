@@ -205,7 +205,7 @@ void CalculateRecon(
 
 
 // Calculates the integer residual between specific pixels between the actual and prediction buffers
-void CalculateResidualInt(
+void CalculateResidualDWord(
 	// OUT
 	int *residual, 
 	int residualStride, 
@@ -232,7 +232,7 @@ void CalculateResidualInt(
 }
 
 // Calculates the int reconstructed picture based on the residual and prediction
-void CalculateRecon32Bit(
+void CalculateReconDWord(
 	// OUT
 	int *recon, 
 	int reconStride, 

@@ -61,7 +61,7 @@ void CalculateResidual(
 	int width,
 	int height);
 
-void CalculateResidualInt(
+void CalculateResidualDWord(
 	// OUT
 	int *residual, 
 	int residualStride, 
@@ -87,7 +87,7 @@ void CalculateRecon(
 	int width,
 	int height);
 
-void CalculateRecon32Bit(
+void CalculateReconDWord(
 	// OUT
 	int *recon, 
 	int reconStride, 

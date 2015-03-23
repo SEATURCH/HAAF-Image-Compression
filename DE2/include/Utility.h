@@ -93,7 +93,7 @@ void CopyCharToIntBuffer(
 	CuIntBuffer dst, 
 	int size);
 
-void Copy32BitTo8BitBuffer(
+void CopyDWordToByteBuffer(
 	CuIntBuffer src, 
 	CuBuffer dst,  
 	int size);

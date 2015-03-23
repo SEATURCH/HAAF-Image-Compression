@@ -142,7 +142,7 @@ void CopyCharToIntBuffer(
 	}
 }
 
-void Copy32BitTo8BitBuffer(
+void CopyDWordToByteBuffer(
 	CuIntBuffer src, 
 	CuBuffer dst,  
 	int len) {

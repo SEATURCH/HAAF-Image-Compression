@@ -1,11 +1,8 @@
 #ifndef ENCODE_H
 #define ENCODE_H
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
-#include "CodingUnitStructure.h"
-#include "Transform.h"
+#include "../include/Utility.h"
+#include "../include/CodingUnitStructure.h"
 
 void CopyReferenceSamples(
 	unsigned char *referenceBuffer, 

@@ -1,4 +1,7 @@
 #include "../include/Encode.h"
+#include "../include/Prediction.h"
+#include "../include/Transform.h"
+#include "../include/Quantize.h"
 
 
 // Copies the reference samples from inputY based on the CU's position.
@@ -136,7 +139,9 @@ void EncodeDecode(
 		referenceBuffer, 
 		codingUnitWidth);
 
-	// Calculate the int residual from the prediction
+	// ***32bits rather than 8bits are used for each sample from this point on.
+
+	// Calculate the residual from the prediction
 	CalculateResidualInt(
 		residualIntBuffer, 
 		codingUnitWidth, 
@@ -184,7 +189,7 @@ void EncodeDecode(
 		codingUnitHeight);
 	
 	// Add the prediction to the inverse transform to get the 'actual'
-	CalculateReconInt(
+	CalculateRecon32Bit(
 		reconIntBuffer, 
 		codingUnitWidth, 
 		invTransformBuffer, 
@@ -194,16 +199,18 @@ void EncodeDecode(
 		codingUnitWidth, 
 		codingUnitHeight);
 		
-
-	// Saturate the int recon into 8 bits
-	CopyIntToCharBuffer(
+	// Saturate the 32bit recon into 8 bits
+	Copy32BitTo8BitBuffer(
 		reconIntBuffer,
 		reconBuffer,
 		(codingUnitWidth)*(codingUnitHeight));
 		
 }
 
-void EncodeCu(CodingUnitStructure_t *codingUnitStructure, int cuX, int cuY)
+void EncodeCu(
+	CodingUnitStructure_t *codingUnitStructure, 
+	int cuX, 
+	int cuY)
 {
 	// Encode Buffers
 	CuIntBuffer transformBuffer;
@@ -431,6 +438,5 @@ void EncodeLoop(CodingUnitStructure_t *codingUnitStructure)
 			printf("Finished %d/%d CU's!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
 		}
 	}
-
 }
 

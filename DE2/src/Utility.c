@@ -6,25 +6,13 @@ int Clip3(const int minVal, const int maxVal, const int a)
 	return MIN(MAX(minVal, a), maxVal);
 }
 
-// Prints a block of samples
-void PrintBlock(unsigned char *inputBlock, int inputStride, int width, int height)
+void palloc(
+	unsigned char **picturePointer, 
+	int width, 
+	int height)
 {
-	int i, j;
-	int inputCursor;
-
-	//printf("Picture %dx%d:\n", width, height);
-	for(j = 0; j < height; j++)
-	{
-		for(i = 0; i < width; i++)
-		{
-			inputCursor = (j * inputStride) + i;
-			printf("%3.1d ", inputBlock[inputCursor]);
-		}
-		printf("\n");
-	}
-	printf("\n");
+	*picturePointer = (unsigned char *) malloc(width * height);
 }
-
 
 // Prints a block of samples
 void FindMaxMinInt(int *inputBlock, int inputStride, int width, int height, int *max, int *min)
@@ -47,6 +35,142 @@ void FindMaxMinInt(int *inputBlock, int inputStride, int width, int height, int 
 				*min = inputBlock[inputCursor];
 		}
 	}
+}
+
+// Self-explanatory
+void SetInputPictureSamplesToValue(unsigned char *inputPicture, int width, int height, int value)
+{
+	int widthCursor;
+	int heightCursor;
+
+	for(heightCursor = 0; heightCursor < height; heightCursor++)
+	{
+		for(widthCursor = 0; widthCursor < width; widthCursor++)
+		{
+			inputPicture[(heightCursor * width) + widthCursor] = value;
+
+		}
+	}
+}
+
+
+// Sets the picture based on CU blocks to an slightly arbitrary number. 
+// Each number symbolizes a 16x16 block
+// 0 1 2 3 4 5 6 ....
+// 1 2 3 4 5 6 7
+// 2 3 4 5 6 7 8
+void SetInputPictureSamplesToArbitrary(unsigned char *inputPicture, int width, int height)
+{
+	int widthCursor;
+	int heightCursor;
+
+
+	int pixelValue = 0;
+
+	for(heightCursor = 0; heightCursor < height; heightCursor++)
+	{
+		for(widthCursor = 0; widthCursor < width; widthCursor++)
+		{
+			inputPicture[(heightCursor * width) + widthCursor] = (widthCursor / 16) + (heightCursor / 16); 
+
+			pixelValue++;
+			if(pixelValue > 92)
+			{
+				pixelValue = 0;
+			}
+		}
+	}
+	//PrintBlock(inputPicture, width, height);
+}
+
+// Returns 1 if buffers are identical
+// Returns 0 if buffers are NOT identical
+int CheckIdenticalBuffers(
+	unsigned char *left,
+	int leftStride,
+	unsigned char *right,
+	int rightStride,
+	int width,
+	int height)
+{
+	int puCursorX;
+	int puCursorY;
+	
+	// Set everything to average
+	for(puCursorY = 0; puCursorY < height; puCursorY++)
+	{
+		for(puCursorX = 0; puCursorX < width; puCursorX++)
+		{
+			 if(left[puCursorY*leftStride + puCursorX] != right[puCursorY*rightStride + puCursorX])
+			 {
+				 return 0;
+			 }
+		}
+	}
+	return 1;
+}
+
+// Copies a block of unsigned char from src to dest
+void CopyBlockByte(
+	unsigned char *src,
+	int srcStride,
+	unsigned char *dest,
+	int destStride,
+	int width,
+	int height)
+{
+	int puCursorX;
+	int puCursorY;
+	
+	// Set everything to average
+	for(puCursorY = 0; puCursorY < height; puCursorY++)
+	{
+		for(puCursorX = 0; puCursorX < width; puCursorX++)
+		{
+			 dest[puCursorY*destStride + puCursorX] = src[puCursorY*srcStride + puCursorX];
+		}
+	}
+}
+
+void CopyCharToIntBuffer(
+	CuBuffer src, 
+	CuIntBuffer dst, 
+	int len) {
+	int bufferCursor;
+	for(bufferCursor=0; bufferCursor<len; bufferCursor++) {
+		dst[bufferCursor] = (int) src[bufferCursor];
+	}
+}
+
+void Copy32BitTo8BitBuffer(
+	CuIntBuffer src, 
+	CuBuffer dst,  
+	int len) {
+	int bufferCursor;
+	for(bufferCursor=0; bufferCursor<len; bufferCursor++) {
+		dst[bufferCursor] = (unsigned char) src[bufferCursor];
+	}
+}
+
+/*** DEBUG FUNCTIONS ***/
+
+// Prints a block of samples
+void PrintBlock(unsigned char *inputBlock, int inputStride, int width, int height)
+{
+	int i, j;
+	int inputCursor;
+
+	//printf("Picture %dx%d:\n", width, height);
+	for(j = 0; j < height; j++)
+	{
+		for(i = 0; i < width; i++)
+		{
+			inputCursor = (j * inputStride) + i;
+			printf("%3.1d ", inputBlock[inputCursor]);
+		}
+		printf("\n");
+	}
+	printf("\n");
 }
 
 // Prints a block of samples
@@ -107,50 +231,3 @@ void PrintReferenceBuffer(unsigned char *referenceBufferY, int cuX, int cuY, int
 
 	}
 }
-
-// Self-explanatory
-void SetInputPictureSamplesToValue(unsigned char *inputPicture, int width, int height, int value)
-{
-	int widthCursor;
-	int heightCursor;
-
-	for(heightCursor = 0; heightCursor < height; heightCursor++)
-	{
-		for(widthCursor = 0; widthCursor < width; widthCursor++)
-		{
-			inputPicture[(heightCursor * width) + widthCursor] = value;
-
-		}
-	}
-}
-
-
-// Sets the picture based on CU blocks to an slightly arbitrary number. 
-// Each number symbolizes a 16x16 block
-// 0 1 2 3 4 5 6 ....
-// 1 2 3 4 5 6 7
-// 2 3 4 5 6 7 8
-void SetInputPictureSamplesToArbitrary(unsigned char *inputPicture, int width, int height)
-{
-	int widthCursor;
-	int heightCursor;
-
-
-	int pixelValue = 0;
-
-	for(heightCursor = 0; heightCursor < height; heightCursor++)
-	{
-		for(widthCursor = 0; widthCursor < width; widthCursor++)
-		{
-			inputPicture[(heightCursor * width) + widthCursor] = (widthCursor / 16) + (heightCursor / 16); 
-
-			pixelValue++;
-			if(pixelValue > 92)
-			{
-				pixelValue = 0;
-			}
-		}
-	}
-	//PrintBlock(inputPicture, width, height);
-}
-

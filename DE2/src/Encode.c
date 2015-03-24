@@ -262,10 +262,10 @@ void EncodeCu(
 	// Copy the samples into the reference buffer
 	CopyReferenceSamples(
 		referenceBuffer, 
-		inputY,
+		reconBestY,//inputY,
 		cuX, 
 		cuY, 
-		yStride, 
+		reconYStride,//yStride, 
 		CODING_UNIT_WIDTH, 
 		CODING_UNIT_HEIGHT);
 

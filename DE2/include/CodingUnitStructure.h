@@ -13,6 +13,9 @@
 // This is a general purpose structure that contains an entire YUV picture
 typedef struct BufferDescriptor_s
 {
+	// Contains the full picture
+	unsigned char *fullPicturePointer;
+
 	// Luma
 	unsigned char *yBuffer;
 	int yStride;

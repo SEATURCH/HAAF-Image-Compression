@@ -16,21 +16,35 @@ void BufferDescriptorConstructor(BufferDescriptor_t *pictureBuffer,
 	int uvStride = width >> 1;
 	int uvHeight = height >> 1;
 
+	int ySize = width * height;
+	int uSize = uvStride * uvHeight;
+	int vSize = uvStride * uvHeight;
+
+	int yuvSize = ySize + uSize + vSize;
+
+	// Y Buffer starts at beginning
+	int yOffset = 0;
+	int uOffset = yOffset + ySize;
+	int vOffset = uOffset + uSize;
+
+	// Allocate memory for the entire picture (YUV420)
+	pictureBuffer->fullPicturePointer = (unsigned char *) malloc(yuvSize * sizeof(unsigned char));
+
 	// Set stride/height
 	// Y
 	pictureBuffer->yStride = width * sampleSize;
 	pictureBuffer->yHeight = height;
-	palloc(&pictureBuffer->yBuffer, pictureBuffer->yStride, pictureBuffer->yHeight);
+	pictureBuffer->yBuffer = &pictureBuffer->fullPicturePointer[yOffset];
 
 	// U
 	pictureBuffer->uStride = uvStride * sampleSize;
 	pictureBuffer->uHeight = uvHeight;
-	palloc(&pictureBuffer->uBuffer, pictureBuffer->uStride, pictureBuffer->uHeight);
+	pictureBuffer->uBuffer = &pictureBuffer->fullPicturePointer[uOffset];
 
 	// V
 	pictureBuffer->vStride = uvStride * sampleSize;
 	pictureBuffer->vHeight = uvHeight;
-	palloc(&pictureBuffer->vBuffer, pictureBuffer->vStride, pictureBuffer->vHeight);
+	pictureBuffer->vBuffer = &pictureBuffer->fullPicturePointer[vOffset];
 
 	// Default is 1 (unsigned char), but 4 (int) is used for transform buffer
 	pictureBuffer->sampleSize = sampleSize;
@@ -38,9 +52,7 @@ void BufferDescriptorConstructor(BufferDescriptor_t *pictureBuffer,
 
 void BufferDescriptorDeconstructor(BufferDescriptor_t *pictureBuffer)
 {
-	free(pictureBuffer->yBuffer);
-	free(pictureBuffer->uBuffer);
-	free(pictureBuffer->vBuffer);
+	free(pictureBuffer->fullPicturePointer);
 }
 
 

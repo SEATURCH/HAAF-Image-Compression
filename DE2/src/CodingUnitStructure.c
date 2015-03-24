@@ -79,9 +79,11 @@ void CodingUnitStructureConstructor(
 	/** Coding Units **/
 	codingUnitStructure->numCusWidth = codingUnitStructure->widthPicture / CODING_UNIT_WIDTH;
 	codingUnitStructure->numCusHeight = codingUnitStructure->heightPicture / CODING_UNIT_HEIGHT;
-
+	
 	// Allocate memory for coding units
 	codingUnitStructure->codingUnits = (CodingUnit_t *) malloc((codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight) * sizeof(CodingUnit_t));
+	// Allocate memory for prediction modes
+	codingUnitStructure->bestPredictionModes = (PredictionMode_t *) malloc( (codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight) * sizeof(PredictionMode_t));
 
 	for(yCuIndex = 0; yCuIndex < codingUnitStructure->numCusHeight; ++yCuIndex)
 	{
@@ -92,8 +94,8 @@ void CodingUnitStructureConstructor(
 
 			// Initialize base variables
 			codingUnitStructure->codingUnits[cuIndex].blockIndex = cuIndex;
-			codingUnitStructure->codingUnits[cuIndex].bestPredictionMode = DC;
-
+			
+			codingUnitStructure->bestPredictionModes[cuIndex] = DC;
 			// Set all prediction mode costs to infinite
 			for(predictionModeCursor = 0; predictionModeCursor < PredictionModeCount; predictionModeCursor++)
 			{
@@ -118,6 +120,7 @@ void CodingUnitStructureDeconstructor(CodingUnitStructure_t *codingUnitStructure
 	BufferDescriptorDeconstructor(&codingUnitStructure->inputPicture);
 	BufferDescriptorDeconstructor(&codingUnitStructure->transformBestBuffer);
 	BufferDescriptorDeconstructor(&codingUnitStructure->reconBestBuffer);
-
+	
+	free(codingUnitStructure->bestPredictionModes);
 	free(codingUnitStructure->codingUnits);
 }

@@ -301,12 +301,11 @@ void EncodeCu(
 
 		// Check new cost with current best cost
 		codingUnit->predictionModeCost[predictionModeCursor] = currentPredictionModeCost;
-		if(codingUnit->predictionModeCost[predictionModeCursor] < codingUnit->predictionModeCost[codingUnit->bestPredictionMode]
+		if(codingUnit->predictionModeCost[predictionModeCursor] < codingUnit->predictionModeCost[ codingUnitStructure->bestPredictionModes[cuIndex] ]
 			|| !predictionModeCursor)
 		{
 			// Update the best prediction mode and copy the transform and recon into the buffers
-			codingUnit->bestPredictionMode = (PredictionMode_t) predictionModeCursor;
-
+			codingUnitStructure->bestPredictionModes[cuIndex] = (PredictionMode_t) predictionModeCursor;
 			// Copy transform buffer into transform best buffer
 			CopyBlockByte(
 				(unsigned char *)transformBufferDWord, 
@@ -328,11 +327,10 @@ void EncodeCu(
 	}
 
 
-	// Encode U and V according to bestPredictionMode (determined from Y in previous loop)
+	// Encode U and V according to bestPredictionModes (determined from Y in previous loop)
 	/***** U *****/
 	{
-		predictionModeCursor = codingUnit->bestPredictionMode;
-
+		predictionModeCursor = codingUnitStructure->bestPredictionModes[cuIndex];
 		// Copy the samples into the reference buffer
 		CopyReferenceSamples(
 			referenceBuffer, 
@@ -375,8 +373,7 @@ void EncodeCu(
 	
 	/***** V *****/
 	{
-		predictionModeCursor = codingUnit->bestPredictionMode;
-
+		predictionModeCursor = codingUnitStructure->bestPredictionModes[cuIndex] ;
 		// Copy the samples into the reference buffer
 		CopyReferenceSamples(
 			referenceBuffer, 
@@ -435,5 +432,10 @@ void EncodeLoop(CodingUnitStructure_t *codingUnitStructure)
 			printf("Finished %d/%d CU's!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
 		}
 	}
+
+	// Binary Code the transformBestBuffer and predictionModes
+
+	// TODO: Import LZ4 library into codebase
+
 }
 

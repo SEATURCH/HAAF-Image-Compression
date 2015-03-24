@@ -40,7 +40,6 @@ typedef struct CodingUnit_s
 	int uvBufferOffset;
 
 	// Prediction Variables
-	PredictionMode_t bestPredictionMode;
 	int predictionModeCost[PredictionModeCount];
 
 } CodingUnit_t;
@@ -51,7 +50,7 @@ typedef struct CodingUnitStructure_s
 	CodingUnit_t *codingUnits;
 	int numCusWidth;
 	int numCusHeight;
-
+	
 	// Input Picture Variables
 	BufferDescriptor_t inputPicture;
 	int widthPicture;
@@ -59,6 +58,9 @@ typedef struct CodingUnitStructure_s
 
 	// Transform Picture Buffers
 	BufferDescriptor_t transformBestBuffer;
+
+	// Prediction Variables
+	PredictionMode_t *bestPredictionModes;
 
 	// Recon Picture Buffers
 	BufferDescriptor_t reconBestBuffer;

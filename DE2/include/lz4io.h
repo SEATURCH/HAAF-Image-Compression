@@ -47,8 +47,25 @@ static char nulmark[] = "/dev/null";
 /* ****************** Functions ********************* */
 /* ************************************************** */
 
-int LZ4IO_compressFilename  (char* input_filename, char* output_filename, int compressionlevel);
-int LZ4IO_decompressFilename(char* input_filename, char* output_filename);
+///int LZ4IO_compressFilename  (char* input_filename, char* output_filename, int compressionlevel);
+int LZ4IO_compressArray(
+	///char* input_filename, 
+	unsigned char *inputStream,
+	int inputStreamSize,
+	///char* output_filename, 
+	// OUT
+	unsigned char *outputStream,
+	int *outputStreamSize, // we need this later
+	int compressionLevel);
+//int LZ4IO_decompressFilename(char* input_filename, char* output_filename);
+int LZ4IO_decompressArray(
+	//char* input_filename, 
+	unsigned char *inputStream,
+	int inputStreamSize,
+	unsigned char *outputStream,
+	int outputStreamSize
+	//char* output_filename
+	);
 
 
 /* ************************************************** */

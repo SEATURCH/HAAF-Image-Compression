@@ -15,6 +15,7 @@ typedef struct BufferDescriptor_s
 {
 	// Contains the full picture
 	unsigned char *fullPicturePointer;
+	//int yuvSize;
 
 	// Luma
 	unsigned char *yBuffer;

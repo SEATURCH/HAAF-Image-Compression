@@ -2,6 +2,7 @@
 #include "../include/Prediction.h"
 #include "../include/Transform.h"
 #include "../include/Quantize.h"
+#include "../include/lz4io.h"
 
 
 // Copies the reference samples from inputY based on the CU's position.
@@ -436,6 +437,82 @@ void EncodeLoop(CodingUnitStructure_t *codingUnitStructure)
 	// Binary Code the transformBestBuffer and predictionModes
 
 	// TODO: Import LZ4 library into codebase
+
+#define TESTBUFFERSIZE (((320*240)*3)/2)*4
+	// this will probably not work...
+	{
+		int uncompressedBufferSize = TESTBUFFERSIZE;
+		unsigned char *transformCoeffs = codingUnitStructure->transformBestBuffer.fullPicturePointer;
+		unsigned char binaryCodingBuffer[TESTBUFFERSIZE];
+		unsigned char uncompressedBuffer[TESTBUFFERSIZE];
+		int binaryCodingBufferSize;
+		int i;
+		int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
+
+		
+		PredictionMode_t *bcPredictionModes;
+		int bcPredictionModesSize;
+		PredictionMode_t *uncompressedPredictionModes;
+		
+		bcPredictionModes = (PredictionMode_t *) malloc(numCUs * sizeof(PredictionMode_t));
+		uncompressedPredictionModes = (PredictionMode_t *) malloc(numCUs * sizeof(PredictionMode_t));
+
+
+		// Transform Coeffs
+		LZ4IO_compressArray(
+			codingUnitStructure->transformBestBuffer.fullPicturePointer, 
+			uncompressedBufferSize,
+			binaryCodingBuffer,
+			&binaryCodingBufferSize,
+			0 // I don't know how to use this input
+			);
+
+		LZ4IO_decompressArray(
+			binaryCodingBuffer, 
+			binaryCodingBufferSize,
+			uncompressedBuffer,
+			uncompressedBufferSize);
+		
+		// Check uncompressed transform coeffs
+		for(i = 0; i < uncompressedBufferSize; i++)
+		{
+			if(transformCoeffs[i] != uncompressedBuffer[i])
+			{
+				printf("Fuck!!!\n");
+			} 
+		}
+
+		// Prediction Modes
+		LZ4IO_compressArray(
+			(unsigned char *) codingUnitStructure->bestPredictionModes, 
+			numCUs * sizeof(PredictionMode_t),
+			(unsigned char *) bcPredictionModes,
+			&bcPredictionModesSize,
+			0 // I don't know how to use this input
+			);
+
+		LZ4IO_decompressArray(
+			(unsigned char *) bcPredictionModes, 
+			bcPredictionModesSize,
+			(unsigned char *) uncompressedPredictionModes,
+			numCUs * sizeof(PredictionMode_t));
+		
+		for(i = 0; i < numCUs; i++)
+		{
+			if(codingUnitStructure->bestPredictionModes[i] != uncompressedPredictionModes[i])
+			{
+				printf("Fuck!!!\n");
+			} 
+		}
+
+
+		printf("done encoding!\n");
+		codingUnitStructure->transformBestBuffer;
+
+		free(bcPredictionModes);
+		free(uncompressedPredictionModes);
+
+	}
 
 }
 

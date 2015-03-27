@@ -133,14 +133,6 @@ void DecodeCu(
 	BufferDescriptor_t *transformBestBuffer = &codingUnitStructure->transformBestBuffer;
 	BufferDescriptor_t *reconBestBuffer = &codingUnitStructure->reconBestBuffer;
 
-	// Unsigned Char Blocks
-	///unsigned char *inputY = &(inputPicture->yBuffer[codingUnit->yBufferOffset]);
-	///unsigned char *inputU = &(inputPicture->uBuffer[codingUnit->uvBufferOffset]);
-	///unsigned char *inputV = &(inputPicture->vBuffer[codingUnit->uvBufferOffset]);
-	///int yStride = inputPicture->yStride;
-	///int uStride = inputPicture->uStride;
-	///int vStride = inputPicture->vStride;
-
 	// Recon
 	unsigned char *reconBestY = &reconBestBuffer->yBuffer[codingUnit->yBufferOffset];
 	unsigned char *reconBestU = &reconBestBuffer->uBuffer[codingUnit->uvBufferOffset];

@@ -4,6 +4,7 @@
 
 #include "../include/Utility.h"
 #include "../include/Prediction.h"
+#include "../include/Bitstream.h"
 
 #ifndef CODINGUNITSTRUCTURE_H
 #define CODINGUNITSTRUCTURE_H
@@ -15,7 +16,7 @@ typedef struct BufferDescriptor_s
 {
 	// Contains the full picture
 	unsigned char *fullPicturePointer;
-	//int yuvSize;
+	int yuvSize;
 
 	// Luma
 	unsigned char *yBuffer;
@@ -69,6 +70,9 @@ typedef struct CodingUnitStructure_s
 	// Recon Picture Buffers
 	BufferDescriptor_t reconBestBuffer;
 
+	// Encoded Bitstream Buffer
+	Bitstream_t bitstream;
+
 } CodingUnitStructure_t;
 
 /*** FUNCTION DEFINITIONS ***/
@@ -84,6 +88,7 @@ void CodingUnitStructureConstructor(
 	int pictureWidth, 
 	int pictureHeight);
 void CodingUnitStructureDeconstructor(CodingUnitStructure_t *codingUnitStructure);
+
 
 
 #endif

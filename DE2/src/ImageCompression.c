@@ -16,12 +16,18 @@
 int main(int argc, char* argv[])
 {
 	CodingUnitStructure_t codingUnitStructure;
+	Bitstream_t outputBitstream;
 
 	/*** CONSTRUCTION ***/
 
 	// Coding Unit Structure Initializes the Coding Unit's and Input Pictures
 	CodingUnitStructureConstructor(
 		&codingUnitStructure, 
+		DEFAULT_PICTURE_WIDTH, 
+		DEFAULT_PICTURE_HEIGHT);
+
+	BitstreamConstructor(
+		&outputBitstream, 
 		DEFAULT_PICTURE_WIDTH, 
 		DEFAULT_PICTURE_HEIGHT);
 
@@ -54,6 +60,16 @@ int main(int argc, char* argv[])
 	printf("Encoding\n");
 	// Encode the image
 	EncodeLoop(&codingUnitStructure);
+
+	GenerateBitstream(
+		&codingUnitStructure, 
+		&outputBitstream);
+
+	WriteBitstreamToFile(
+		&outputBitstream,
+		"Z:\\Cats.haaf");
+
+
 	printf("Encode Done\n");
 	
 

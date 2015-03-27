@@ -3,6 +3,7 @@
 
 #include "../include/Utility.h"
 #include "../include/CodingUnitStructure.h"
+#include "../include/Bitstream.h"
 
 void CopyReferenceSamples(
 	unsigned char *referenceBuffer, 
@@ -36,5 +37,9 @@ void EncodeDecode(
 
 void EncodeCu(CodingUnitStructure_t *codingUnitStructure, int cuX, int cuY);
 void EncodeLoop(CodingUnitStructure_t *codingUnitStructure);
+
+void GenerateBitstream(
+	CodingUnitStructure_t *codingUnitStructure,
+	Bitstream_t *outputBitstream);
 
 #endif

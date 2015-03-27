@@ -25,10 +25,10 @@ void BufferDescriptorConstructor(BufferDescriptor_t *pictureBuffer,
 	int uOffset = yOffset + ySize;
 	int vOffset = uOffset + uSize;
 
-	int yuvSize = ySize + uSize + vSize;
+	pictureBuffer->yuvSize = ySize + uSize + vSize;
 
 	// Allocate memory for the entire picture (YUV420)
-	pictureBuffer->fullPicturePointer = (unsigned char *) malloc( yuvSize * sizeof(unsigned char));
+	pictureBuffer->fullPicturePointer = (unsigned char *) malloc( pictureBuffer->yuvSize * sizeof(unsigned char));
 
 	// Set stride/height
 	// Y

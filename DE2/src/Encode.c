@@ -2,7 +2,6 @@
 #include "../include/Prediction.h"
 #include "../include/Transform.h"
 #include "../include/Quantize.h"
-#include "../include/lz4io.h"
 
 
 // Copies the reference samples from inputY based on the CU's position.
@@ -416,6 +415,10 @@ void EncodeCu(
 	}
 }
 
+
+
+
+
 void EncodeLoop(CodingUnitStructure_t *codingUnitStructure)
 {
 	int cuCursorX;
@@ -435,84 +438,142 @@ void EncodeLoop(CodingUnitStructure_t *codingUnitStructure)
 	}
 
 	// Binary Code the transformBestBuffer and predictionModes
-
-	// TODO: Import LZ4 library into codebase
-
-#define TESTBUFFERSIZE (((320*240)*3)/2)*4
-	// this will probably not work...
-	{
-		int uncompressedBufferSize = TESTBUFFERSIZE;
-		unsigned char *transformCoeffs = codingUnitStructure->transformBestBuffer.fullPicturePointer;
-		unsigned char binaryCodingBuffer[TESTBUFFERSIZE];
-		unsigned char uncompressedBuffer[TESTBUFFERSIZE];
-		int binaryCodingBufferSize;
-		int i;
-		int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
-
-		
-		PredictionMode_t *bcPredictionModes;
-		int bcPredictionModesSize;
-		PredictionMode_t *uncompressedPredictionModes;
-		
-		bcPredictionModes = (PredictionMode_t *) malloc(numCUs * sizeof(PredictionMode_t));
-		uncompressedPredictionModes = (PredictionMode_t *) malloc(numCUs * sizeof(PredictionMode_t));
+	
 
 
-		// Transform Coeffs
-		LZ4IO_compressArray(
-			codingUnitStructure->transformBestBuffer.fullPicturePointer, 
-			uncompressedBufferSize,
-			binaryCodingBuffer,
-			&binaryCodingBufferSize,
-			0 // I don't know how to use this input
-			);
-
-		LZ4IO_decompressArray(
-			binaryCodingBuffer, 
-			binaryCodingBufferSize,
-			uncompressedBuffer,
-			uncompressedBufferSize);
-		
-		// Check uncompressed transform coeffs
-		for(i = 0; i < uncompressedBufferSize; i++)
-		{
-			if(transformCoeffs[i] != uncompressedBuffer[i])
-			{
-				printf("Fuck!!!\n");
-			} 
-		}
-
-		// Prediction Modes
-		LZ4IO_compressArray(
-			(unsigned char *) codingUnitStructure->bestPredictionModes, 
-			numCUs * sizeof(PredictionMode_t),
-			(unsigned char *) bcPredictionModes,
-			&bcPredictionModesSize,
-			0 // I don't know how to use this input
-			);
-
-		LZ4IO_decompressArray(
-			(unsigned char *) bcPredictionModes, 
-			bcPredictionModesSize,
-			(unsigned char *) uncompressedPredictionModes,
-			numCUs * sizeof(PredictionMode_t));
-		
-		for(i = 0; i < numCUs; i++)
-		{
-			if(codingUnitStructure->bestPredictionModes[i] != uncompressedPredictionModes[i])
-			{
-				printf("Fuck!!!\n");
-			} 
-		}
+	//// TODO: Import LZ4 library into codebase
+	//{
+	//	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
+	//	// 300: Total number of prediction modes for 320x240
+	//	unsigned char outputBuffer[300];
+	//	int outputBufferLen;
+	//
+	//	PredictionMode_t predictionModeBuffer[300];
+	//	int numPredictionModes;
+	//
+	//	int predCursor = 0;
+	//
+	//	// Testing encoding Prediction Modes
+	//	EncodePredictionModes(
+	//		outputBuffer,
+	//		&outputBufferLen,
+	//		codingUnitStructure->bestPredictionModes,
+	//		numCUs,
+	//		PredictionModeCount);
+	//
+	//	// Test decoding of Prediction Modes
+	//	DecodePredictionModes(
+	//		predictionModeBuffer,
+	//		&numPredictionModes,
+	//		outputBuffer,
+	//		outputBufferLen,
+	//		PredictionModeCount);
+	//
+	//	for(predCursor = 0; predCursor < numCUs; predCursor++)
+	//	{
+	//		if(codingUnitStructure->bestPredictionModes[predCursor] != predictionModeBuffer[predCursor])
+	//		{
+	//			printf("F*CKKKKKK!\n");
+	//		}
+	//	}
+	//
+	//}
 
 
-		printf("done encoding!\n");
-		codingUnitStructure->transformBestBuffer;
 
-		free(bcPredictionModes);
-		free(uncompressedPredictionModes);
 
-	}
+//#define TESTBUFFERSIZE (((320*240)*3)/2)*4
+//	// this will probably not work...
+//	{
+//		int uncompressedBufferSize = TESTBUFFERSIZE;
+//		unsigned char *transformCoeffs = codingUnitStructure->transformBestBuffer.fullPicturePointer;
+//		unsigned char binaryCodingBuffer[TESTBUFFERSIZE];
+//		unsigned char uncompressedBuffer[TESTBUFFERSIZE];
+//		int binaryCodingBufferSize;
+//		int i;
+//		int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
+//
+//		
+//		PredictionMode_t *bcPredictionModes;
+//		int bcPredictionModesSize;
+//		PredictionMode_t *uncompressedPredictionModes;
+//		
+//		bcPredictionModes = (PredictionMode_t *) malloc(numCUs * sizeof(PredictionMode_t));
+//		uncompressedPredictionModes = (PredictionMode_t *) malloc(numCUs * sizeof(PredictionMode_t));
+//
+//
+//		// Transform Coeffs
+//		LZ4IO_compressArray(
+//			codingUnitStructure->transformBestBuffer.fullPicturePointer, 
+//			uncompressedBufferSize,
+//			binaryCodingBuffer,
+//			&binaryCodingBufferSize,
+//			0 // I don't know how to use this input
+//			);
+//
+//		LZ4IO_decompressArray(
+//			binaryCodingBuffer, 
+//			binaryCodingBufferSize,
+//			uncompressedBuffer,
+//			uncompressedBufferSize);
+//		
+//		// Check uncompressed transform coeffs
+//		for(i = 0; i < uncompressedBufferSize; i++)
+//		{
+//			if(transformCoeffs[i] != uncompressedBuffer[i])
+//			{
+//				printf("Fuck!!!\n");
+//			} 
+//		}
+//
+//		// Prediction Modes
+//		LZ4IO_compressArray(
+//			(unsigned char *) codingUnitStructure->bestPredictionModes, 
+//			numCUs * sizeof(PredictionMode_t),
+//			(unsigned char *) bcPredictionModes,
+//			&bcPredictionModesSize,
+//			0 // I don't know how to use this input
+//			);
+//
+//		LZ4IO_decompressArray(
+//			(unsigned char *) bcPredictionModes, 
+//			bcPredictionModesSize,
+//			(unsigned char *) uncompressedPredictionModes,
+//			numCUs * sizeof(PredictionMode_t));
+//		
+//		for(i = 0; i < numCUs; i++)
+//		{
+//			if(codingUnitStructure->bestPredictionModes[i] != uncompressedPredictionModes[i])
+//			{
+//				printf("Fuck!!!\n");
+//			} 
+//		}
+//
+//
+//		printf("done encoding!\n");
+//		codingUnitStructure->transformBestBuffer;
+//
+//		free(bcPredictionModes);
+//		free(uncompressedPredictionModes);
+//}
 
 }
 
+
+// Requires EncodeLoop has run successfully on codingUnitStructure
+void GenerateBitstream(
+	CodingUnitStructure_t *codingUnitStructure,
+	Bitstream_t *outputBitstream)
+{
+	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusHeight;
+
+	EncodeBitstream(
+		outputBitstream,
+		(unsigned char *) codingUnitStructure->transformBestBuffer.fullPicturePointer,
+		codingUnitStructure->transformBestBuffer.yuvSize,
+		codingUnitStructure->bestPredictionModes,
+		numCUs,
+		codingUnitStructure->widthPicture,
+		codingUnitStructure->heightPicture);
+
+}

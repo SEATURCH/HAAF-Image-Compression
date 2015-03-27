@@ -39,6 +39,11 @@ void EncodeBitstream(
 	int width,
 	int height);
 
+void GetPictureResolutionFromHeader(
+	Bitstream_t *bitstream,
+	int *width,
+	int *height);
+
 void WriteBitstreamToFile(
 	Bitstream_t *bitstream,
 	const char *filename);

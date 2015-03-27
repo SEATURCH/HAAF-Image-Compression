@@ -72,11 +72,11 @@ void CodingUnitStructureConstructor(
 
 	// Initialize Picture Buffers
 	// Normal Dims
-	BufferDescriptorConstructor(
-		&codingUnitStructure->inputPicture,
-		codingUnitStructure->widthPicture,
-		codingUnitStructure->heightPicture,
-		sizeof(unsigned char));
+	//BufferDescriptorConstructor(
+	//	&codingUnitStructure->inputPicture,
+	//	codingUnitStructure->widthPicture,
+	//	codingUnitStructure->heightPicture,
+	//	sizeof(unsigned char));
 	BufferDescriptorConstructor(
 		&codingUnitStructure->transformBestBuffer,
 		codingUnitStructure->widthPicture,
@@ -129,10 +129,18 @@ void CodingUnitStructureConstructor(
 
 void CodingUnitStructureDeconstructor(CodingUnitStructure_t *codingUnitStructure)
 {
-	BufferDescriptorDeconstructor(&codingUnitStructure->inputPicture);
+	//BufferDescriptorDeconstructor(&codingUnitStructure->inputPicture);
 	BufferDescriptorDeconstructor(&codingUnitStructure->transformBestBuffer);
 	BufferDescriptorDeconstructor(&codingUnitStructure->reconBestBuffer);
 	
 	free(codingUnitStructure->bestPredictionModes);
 	free(codingUnitStructure->codingUnits);
+}
+
+
+void SetInputPicture(
+	CodingUnitStructure_t *codingUnitStructure,
+	BufferDescriptor_t *inputPicture)
+{
+	codingUnitStructure->inputPicture = inputPicture;
 }

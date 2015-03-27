@@ -19,9 +19,21 @@ void BitstreamConstructor(
 	bitstream->size = 0;
 }
 
+
 void BitstreamDeconstructor(Bitstream_t *bitstream)
 {
 	free(bitstream->data);
+}
+
+void GetPictureResolutionFromHeader(
+	Bitstream_t *bitstream,
+	int *width,
+	int *height)
+{
+	*width = *((unsigned short *)(bitstream->data));
+	*height = *((unsigned short *)(bitstream->data + sizeof(unsigned short)));
+
+	//printf("Bitstream Picture Resolution: %dx%d\n", *width, *height);
 }
 
 void WriteBitstreamToFile(

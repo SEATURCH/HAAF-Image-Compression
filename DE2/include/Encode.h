@@ -35,8 +35,14 @@ void EncodeDecode(
 	int codingUnitHeight,
 	int qp);
 
-void EncodeCu(CodingUnitStructure_t *codingUnitStructure, int cuX, int cuY);
-void EncodeLoop(CodingUnitStructure_t *codingUnitStructure);
+void EncodeCu(
+	CodingUnitStructure_t *codingUnitStructure, 
+	int cuX, 
+	int cuY,
+	int qpValue);
+void EncodeLoop(
+	CodingUnitStructure_t *codingUnitStructure,
+	int qpValue);
 
 void GenerateBitstream(
 	CodingUnitStructure_t *codingUnitStructure,

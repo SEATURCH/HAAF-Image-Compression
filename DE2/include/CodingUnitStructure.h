@@ -57,7 +57,7 @@ typedef struct CodingUnitStructure_s
 	int numCusHeight;
 	
 	// Input Picture Variables
-	BufferDescriptor_t inputPicture;
+	BufferDescriptor_t *inputPicture;
 	int widthPicture;
 	int heightPicture;
 
@@ -88,6 +88,10 @@ void CodingUnitStructureConstructor(
 	int pictureWidth, 
 	int pictureHeight);
 void CodingUnitStructureDeconstructor(CodingUnitStructure_t *codingUnitStructure);
+
+void SetInputPicture(
+	CodingUnitStructure_t *codingUnitStructure,
+	BufferDescriptor_t *inputPicture);
 
 
 

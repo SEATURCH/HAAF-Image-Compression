@@ -207,7 +207,8 @@ void EncodeDecode(
 void EncodeCu(
 	CodingUnitStructure_t *codingUnitStructure, 
 	int cuX, 
-	int cuY)
+	int cuY,
+	int qpValue)
 {
 	// Encode Buffers
 	CuIntBuffer transformBufferDWord;
@@ -220,14 +221,14 @@ void EncodeCu(
 	// pointer to the input Picture at the CU's location
 	CodingUnit_t *codingUnit = &codingUnitStructure->codingUnits[cuIndex];
 
-	BufferDescriptor_t *inputPicture = &codingUnitStructure->inputPicture;
+	BufferDescriptor_t *inputPicture = codingUnitStructure->inputPicture;
 	BufferDescriptor_t *transformBestBuffer = &codingUnitStructure->transformBestBuffer;
 	BufferDescriptor_t *reconBestBuffer = &codingUnitStructure->reconBestBuffer;
 
 	// Unsigned Char Blocks
-	unsigned char *inputY = &inputPicture->yBuffer[codingUnit->yBufferOffset];
-	unsigned char *inputU = &inputPicture->uBuffer[codingUnit->uvBufferOffset];
-	unsigned char *inputV = &inputPicture->vBuffer[codingUnit->uvBufferOffset];
+	unsigned char *inputY = &(inputPicture->yBuffer[codingUnit->yBufferOffset]);
+	unsigned char *inputU = &(inputPicture->uBuffer[codingUnit->uvBufferOffset]);
+	unsigned char *inputV = &(inputPicture->vBuffer[codingUnit->uvBufferOffset]);
 	int yStride = inputPicture->yStride;
 	int uStride = inputPicture->uStride;
 	int vStride = inputPicture->vStride;
@@ -286,7 +287,7 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH, 
 			CODING_UNIT_HEIGHT,
-			DEFAULT_QP_VALUE);
+			qpValue);
 
 		/***** COST CALCULATION *****/
 		// Determine the cost of this prediction mode, and update if necessary
@@ -350,7 +351,7 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			DEFAULT_QP_VALUE);
+			qpValue);
 
 		// Copy transform buffer into transform best buffer
 		CopyBlockByte(
@@ -393,7 +394,7 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			DEFAULT_QP_VALUE);
+			qpValue);
 
 		// Copy transform buffer into transform best buffer
 		CopyBlockByte(
@@ -419,7 +420,10 @@ void EncodeCu(
 
 
 
-void EncodeLoop(CodingUnitStructure_t *codingUnitStructure)
+void EncodeLoop(
+	CodingUnitStructure_t *codingUnitStructure,
+	int qpValue
+	)
 {
 	int cuCursorX;
 	int cuCursorY;
@@ -431,7 +435,11 @@ void EncodeLoop(CodingUnitStructure_t *codingUnitStructure)
 	{
 		for(cuCursorX = 0; cuCursorX < codingUnitStructure->numCusWidth; cuCursorX++)
 		{
-			EncodeCu(codingUnitStructure, cuCursorX, cuCursorY);
+			EncodeCu(
+				codingUnitStructure, 
+				cuCursorX, 
+				cuCursorY,
+				qpValue);
 
 			printf("Finished %d/%d CU's!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
 		}

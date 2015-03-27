@@ -98,6 +98,15 @@ void CopyDWordToByteBuffer(
 	CuBuffer dst,  
 	int size);
 
+void CopyDWordToDWordBuffer(
+	int *src, 
+	int srcStride, 
+	int *dst, 
+	int dstStride, 
+	int width, 
+	int height);
+
+
 /*** DEBUG FUNCTIONS **/
 void PrintBlock(
 	unsigned char *inputBlock, 

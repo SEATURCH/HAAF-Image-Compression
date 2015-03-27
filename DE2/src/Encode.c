@@ -111,6 +111,246 @@ int ComputeCost(
 	return cost;
 }
 
+
+void DecodeCu(
+	CodingUnitStructure_t *codingUnitStructure, 
+	int cuX, 
+	int cuY,
+	int qpValue)
+{
+	// Encode Buffers
+	CuIntBuffer transformBufferDWord;
+
+	// Decode Buffers (Mode Decision)
+	CuBuffer reconBuffer; // Will be compared to Actual Picture
+
+	int cuIndex = (cuY * codingUnitStructure->numCusWidth) + cuX;
+
+	// pointer to the input Picture at the CU's location
+	CodingUnit_t *codingUnit = &codingUnitStructure->codingUnits[cuIndex];
+
+	///BufferDescriptor_t *inputPicture = codingUnitStructure->inputPicture;
+	BufferDescriptor_t *transformBestBuffer = &codingUnitStructure->transformBestBuffer;
+	BufferDescriptor_t *reconBestBuffer = &codingUnitStructure->reconBestBuffer;
+
+	// Unsigned Char Blocks
+	///unsigned char *inputY = &(inputPicture->yBuffer[codingUnit->yBufferOffset]);
+	///unsigned char *inputU = &(inputPicture->uBuffer[codingUnit->uvBufferOffset]);
+	///unsigned char *inputV = &(inputPicture->vBuffer[codingUnit->uvBufferOffset]);
+	///int yStride = inputPicture->yStride;
+	///int uStride = inputPicture->uStride;
+	///int vStride = inputPicture->vStride;
+
+	// Recon
+	unsigned char *reconBestY = &reconBestBuffer->yBuffer[codingUnit->yBufferOffset];
+	unsigned char *reconBestU = &reconBestBuffer->uBuffer[codingUnit->uvBufferOffset];
+	unsigned char *reconBestV = &reconBestBuffer->vBuffer[codingUnit->uvBufferOffset];
+	int reconYStride = reconBestBuffer->yStride;
+	int reconUStride = reconBestBuffer->uStride;
+	int reconVStride = reconBestBuffer->vStride;
+
+	// Transform Int Blocks (uses custom offset since it is in int space
+	int transformStrideY = transformBestBuffer->yStride;
+	int transformStrideU = transformBestBuffer->uStride;
+	int transformStrideV = transformBestBuffer->vStride;
+	unsigned char *transformBestY = &transformBestBuffer->yBuffer[(transformStrideY * cuY) + (cuX * transformBestBuffer->sampleSize)];
+	unsigned char *transformBestU = &transformBestBuffer->uBuffer[(transformStrideU * cuY) + (cuX * transformBestBuffer->sampleSize)];
+	unsigned char *transformBestV = &transformBestBuffer->vBuffer[(transformStrideV * cuY) + (cuX * transformBestBuffer->sampleSize)];
+
+	// Units are in bytes
+	int transformWidth = CODING_UNIT_WIDTH * transformBestBuffer->sampleSize;
+
+	// Will contain the reference for the CU
+	// [0] : pixel offset (-1, -1) from CU start
+	// [1-16] : pixels offset from (0, -1) to (15, -1)
+	// [17-32] : pixels offset from (-1, 0) to (-1, 15)
+	unsigned char referenceBuffer[CODING_UNIT_REF_BUFFER_SIZE_Y];
+
+	int predictionMode = codingUnitStructure->bestPredictionModes[cuIndex];
+	
+	// Copy the samples into the reference buffer
+	CopyReferenceSamples(
+		referenceBuffer, 
+		reconBestY,
+		cuX, 
+		cuY, 
+		reconYStride, 
+		CODING_UNIT_WIDTH, 
+		CODING_UNIT_HEIGHT);
+
+	///***** DECODING *****/
+	CopyDWordToDWordBuffer(
+		(int *)transformBestY,
+		transformStrideY,
+		transformBufferDWord,
+		CODING_UNIT_WIDTH,
+		CODING_UNIT_WIDTH,
+		CODING_UNIT_HEIGHT);
+
+	Decode(
+		transformBufferDWord, 
+		reconBuffer, 
+		referenceBuffer, 
+		predictionMode, 
+		CODING_UNIT_WIDTH, 
+		CODING_UNIT_HEIGHT,
+		qpValue);
+
+	// Copy recon buffer into recon best buffer
+	CopyBlockByte(
+		reconBuffer, 
+		CODING_UNIT_WIDTH, 
+		reconBestY, 
+		reconYStride, 
+		CODING_UNIT_WIDTH, 
+		CODING_UNIT_HEIGHT);
+
+
+	// Encode U and V according to bestPredictionModes (determined from Y in previous loop)
+	/***** U *****/
+	{
+		// Copy the samples into the reference buffer
+		CopyReferenceSamples(
+			referenceBuffer, 
+			reconBestU,
+			cuX, 
+			cuY, 
+			reconUStride, 
+			CODING_UNIT_WIDTH >> 1, 
+			CODING_UNIT_HEIGHT >> 1);
+
+		CopyDWordToDWordBuffer(
+			(int *)transformBestU,
+			transformStrideU,
+			transformBufferDWord,
+			CODING_UNIT_WIDTH >> 1,
+			CODING_UNIT_WIDTH >> 1,
+			CODING_UNIT_HEIGHT >> 1);
+
+		Decode(
+			transformBufferDWord, 
+			reconBuffer, 
+			referenceBuffer, 
+			predictionMode, 
+			CODING_UNIT_WIDTH >> 1, 
+			CODING_UNIT_HEIGHT >> 1,
+			qpValue);
+
+		// Copy recon buffer into recon best buffer
+		CopyBlockByte(
+			reconBuffer, 
+			(CODING_UNIT_WIDTH >> 1), 
+			reconBestU, 
+			reconUStride, 
+			(CODING_UNIT_WIDTH >> 1), 
+			(CODING_UNIT_HEIGHT >> 1));
+	}
+	
+	/***** V *****/
+	{
+		// Copy the samples into the reference buffer
+		CopyReferenceSamples(
+			referenceBuffer, 
+			reconBestV, 
+			cuX, 
+			cuY, 
+			reconUStride, 
+			CODING_UNIT_WIDTH >> 1, 
+			CODING_UNIT_HEIGHT >> 1);
+		
+		CopyDWordToDWordBuffer(
+			(int *)transformBestV,
+			transformStrideV,
+			transformBufferDWord,
+			CODING_UNIT_WIDTH >> 1,
+			CODING_UNIT_WIDTH >> 1,
+			CODING_UNIT_HEIGHT >> 1);
+
+		Decode(
+			transformBufferDWord, 
+			reconBuffer, 
+			referenceBuffer, 
+			predictionMode, 
+			CODING_UNIT_WIDTH >> 1, 
+			CODING_UNIT_HEIGHT >> 1,
+			qpValue);
+
+		// Copy recon buffer into recon best buffer
+		CopyBlockByte(
+			reconBuffer, 
+			(CODING_UNIT_WIDTH >> 1), 
+			reconBestV, 
+			reconVStride, 
+			(CODING_UNIT_WIDTH >> 1), 
+			(CODING_UNIT_HEIGHT >> 1));
+	}
+}
+
+
+void Decode(
+	CuIntBuffer transformBufferDWord,
+	CuBuffer reconBuffer,
+	unsigned char *referenceBuffer,
+	int predictionMode, 
+	int codingUnitWidth,
+	int codingUnitHeight,
+	int qp
+	)
+{
+	CuIntBuffer invTransformBufferDWord;
+	CuIntBuffer reconBufferDWord;
+	CuBuffer predictionBuffer;
+	
+	// Create prediction based off reference and predictionModeCursor
+	PredictionFuncPtrTable[predictionMode](
+		predictionBuffer, 
+		codingUnitWidth, 
+		referenceBuffer, 
+		codingUnitWidth);
+
+	/***** DECODE *****/
+	// Decode the transform to determine the cost for the prediction mode
+
+	// Inverse Quantize
+	QuantizationFuncPtrTable[QuantizeBackward](
+		transformBufferDWord, 
+		codingUnitWidth, 
+		codingUnitWidth, 
+		codingUnitHeight, 
+		qp);
+
+	// Inverse Transform
+	xITrMxN(
+		transformBufferDWord, 
+		invTransformBufferDWord, 
+		codingUnitWidth, 
+		codingUnitHeight);
+	
+	// Add the prediction to the inverse transform to get the 'actual'
+	CalculateReconDWord(
+		reconBufferDWord, 
+		codingUnitWidth, 
+		invTransformBufferDWord, 
+		codingUnitWidth, 
+		predictionBuffer, 
+		codingUnitWidth, 
+		codingUnitWidth, 
+		codingUnitHeight);
+		
+	// Saturate the 32bit recon into 8 bits
+	CopyDWordToByteBuffer(
+		reconBufferDWord,
+		reconBuffer,
+		(codingUnitWidth)*(codingUnitHeight));
+		
+}
+
+
+
+
+
+
+
 void EncodeDecode(
 	// OUT
 	CuIntBuffer transformBufferDWord, 
@@ -164,44 +404,16 @@ void EncodeDecode(
 		codingUnitHeight, 
 		qp);
 
-
-	// **At this point, Encoding is finished,we can harvest the transform buffer for use with Huffman Encoding**
-
 	/***** DECODE *****/
-	// Decode the transform to determine the cost for the prediction mode
-
-	// Inverse Quantize
-	QuantizationFuncPtrTable[QuantizeBackward](
-		transformBufferDWord, 
-		codingUnitWidth, 
-		codingUnitWidth, 
-		codingUnitHeight, 
+	Decode(
+		transformBufferDWord,
+		reconBuffer,
+		referenceBuffer,
+		predictionMode,
+		codingUnitWidth,
+		codingUnitHeight,
 		qp);
 
-	// Inverse Transform
-	xITrMxN(
-		transformBufferDWord, 
-		invTransformBufferDWord, 
-		codingUnitWidth, 
-		codingUnitHeight);
-	
-	// Add the prediction to the inverse transform to get the 'actual'
-	CalculateReconDWord(
-		reconBufferDWord, 
-		codingUnitWidth, 
-		invTransformBufferDWord, 
-		codingUnitWidth, 
-		predictionBuffer, 
-		codingUnitWidth, 
-		codingUnitWidth, 
-		codingUnitHeight);
-		
-	// Saturate the 32bit recon into 8 bits
-	CopyDWordToByteBuffer(
-		reconBufferDWord,
-		reconBuffer,
-		(codingUnitWidth)*(codingUnitHeight));
-		
 }
 
 void EncodeCu(

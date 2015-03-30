@@ -63,15 +63,13 @@ typedef struct CodingUnitStructure_s
 
 	// Transform Picture Buffers
 	BufferDescriptor_t transformBestBuffer;
+	int qp;
 
 	// Prediction Variables
 	PredictionMode_t *bestPredictionModes;
 
 	// Recon Picture Buffers
 	BufferDescriptor_t reconBestBuffer;
-
-	// Encoded Bitstream Buffer
-	Bitstream_t bitstream;
 
 } CodingUnitStructure_t;
 
@@ -88,6 +86,8 @@ void CodingUnitStructureConstructor(
 	int pictureWidth, 
 	int pictureHeight);
 void CodingUnitStructureDeconstructor(CodingUnitStructure_t *codingUnitStructure);
+
+
 
 void SetInputPicture(
 	CodingUnitStructure_t *codingUnitStructure,

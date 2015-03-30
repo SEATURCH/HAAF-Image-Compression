@@ -337,12 +337,6 @@ void Decode(
 		
 }
 
-
-
-
-
-
-
 void EncodeDecode(
 	// OUT
 	CuIntBuffer transformBufferDWord, 
@@ -358,8 +352,6 @@ void EncodeDecode(
 {
 	CuBuffer	predictionBuffer;
 	CuIntBuffer residualBufferDWord;
-	CuIntBuffer invTransformBufferDWord;
-	CuIntBuffer reconBufferDWord;
 
 	// Create prediction based off reference and predictionModeCursor
 	PredictionFuncPtrTable[predictionMode](
@@ -649,10 +641,11 @@ void EncodeLoop(
 		}
 	}
 
-	// Binary Code the transformBestBuffer and predictionModes
-	
+	// Update the QP value after encoding is finished
+	codingUnitStructure->qp = qpValue;
 
 
+	//// Binary Code the transformBestBuffer and predictionModes
 	//// TODO: Import LZ4 library into codebase
 	//{
 	//	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
@@ -777,7 +770,7 @@ void GenerateBitstream(
 	CodingUnitStructure_t *codingUnitStructure,
 	Bitstream_t *outputBitstream)
 {
-	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusHeight;
+	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
 
 	EncodeBitstream(
 		outputBitstream,
@@ -786,6 +779,7 @@ void GenerateBitstream(
 		codingUnitStructure->bestPredictionModes,
 		numCUs,
 		codingUnitStructure->widthPicture,
-		codingUnitStructure->heightPicture);
+		codingUnitStructure->heightPicture,
+		codingUnitStructure->qp);
 
 }

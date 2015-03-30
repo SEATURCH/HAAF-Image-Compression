@@ -13,9 +13,37 @@
 #include "../include/OpenPicture.h"
 #include "../include/Bitstream.h"
 
+// ENUM - DO NOT TOUCH
+#define ENCODE_PICTURE			(0)
+#define DECODE_PICTURE			(1)
+#define ENCODE_DECODE_PICTURE	(2)
+
+
+/**** Change this to determine process type ****/
+#define PROCESS_TYPE	(ENCODE_DECODE_PICTURE)
+
+// Enable/Disable Encoding/Decoding
+#if PROCESS_TYPE == ENCODE_DECODE_PICTURE
+
+#define ENABLE_ENCODING	(1)
+#define ENABLE_DECODING	(1)
+
+#elif PROCESS_TYPE == ENCODE_PICTURE
+
+#define ENABLE_ENCODING	(1)
+#define ENABLE_DECODING	(0)
+
+#else if PROCESS_TYPE == DECODE_PICTURE
+
+#define ENABLE_ENCODING	(0)
+#define ENABLE_DECODING	(1)
+
+#endif
 
 int main(int argc, char* argv[])
 {
+
+#if ENABLE_ENCODING 
 	/**** ENCODING ****/
 	{
 		CodingUnitStructure_t codingUnitStructure;
@@ -89,7 +117,7 @@ int main(int argc, char* argv[])
 		// Write the bitstream to file
 		WriteBitstreamToFile(
 			&outputBitstream,
-			"Z:\\Cats.haaf");
+			"Z:\\EncodedFiles\\Cats.haaf");
 
 
 		printf("Encode Done\n");
@@ -113,12 +141,45 @@ int main(int argc, char* argv[])
 
 	}
 
+#endif
 
+
+#if ENABLE_DECODING
 	/**** DECODE FILE INTO RECON ****/
-	//CodingUnitStructureDeconstructor(&codingUnitStructure);
 	{
+		CodingUnitStructure_t codingUnitStructure;
+		BufferDescriptor_t inputPicture;
+		Bitstream_t inputBitstream; //  Will be constructed by OpenBitstreamFromFile
+
+		int pictureWidth;
+		int pictureHeight;
+		int qp;
+
+		const char *inputFile = "Z:\\EncodedFiles\\Cats.haaf";
+
+		/*** CONSTRUCTION ***/
+		OpenBitstreamFromFile(
+			"Z:\\EncodedFiles\\Cats.haaf",
+			&inputBitstream,
+			&pictureWidth,
+			&pictureHeight,
+			&qp);
+
+		CodingUnitStructureConstructor(
+			&codingUnitStructure,
+			pictureWidth,
+			pictureHeight);
+
+		/*** MAIN ALGORITHM ***/
+
+		// Decode bitstream into CodingUnitStructure
+		DecodeBitstream(
+			&codingUnitStructure, 
+			&inputBitstream);
+
+
 		//int width, height;
-		//GetPictureResolutionFromHeader(
+		//GetPictureInfoFromHeader(
 		//	&outputBitstream,
 		//	&width,
 		//	&height);
@@ -128,16 +189,12 @@ int main(int argc, char* argv[])
 		//	&codingUnitStructure, 
 		//	width, 
 		//	height);
+
+		
 	}
 
+#endif
 
-
-
-
-
-
-
-	
 
 	return 0;
 }

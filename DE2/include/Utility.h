@@ -28,10 +28,18 @@
 #define DEFAULT_PICTURE_HEIGHT		(240)
 
 #define BIT_DEPTH					(8) // 1 byte
-#define DEFAULT_QP_VALUE			(0)
+#define DEFAULT_QP_VALUE			(56)
 
 #define DEFAULT_SAMPLE_VALUE		(1 << (BIT_DEPTH - 1))
 #define PICTURE_YUV420_SIZE			(((DEFAULT_PICTURE_WIDTH)*(DEFAULT_PICTURE_HEIGHT)*(3))>>1)
+
+
+// LZ4
+#if N2_BUILD
+#define LZ4_COMPRESSION_LEVEL (0)
+#elif VS_BUILD
+#define LZ4_COMPRESSION_LEVEL (10)
+#endif
 
 /*** MACRO FUNCTIONS ***/
 #define MIN(a, b) (a<b?a:b)

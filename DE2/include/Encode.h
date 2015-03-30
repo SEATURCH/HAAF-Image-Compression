@@ -22,6 +22,16 @@ int ComputeCost(
 	int width, 
 	int height);
 
+void Decode(
+	CuIntBuffer transformBufferDWord,
+	CuBuffer reconBuffer,
+	unsigned char *referenceBuffer,
+	int predictionMode, 
+	int codingUnitWidth,
+	int codingUnitHeight,
+	int qp
+	);
+
 void EncodeDecode(
 	// OUT
 	CuIntBuffer transformBuffer, 

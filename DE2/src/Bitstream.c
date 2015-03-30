@@ -19,21 +19,39 @@ void BitstreamConstructor(
 	bitstream->size = 0;
 }
 
+void BitstreamConstructorMaxSize(
+	Bitstream_t *bitstream, 
+	int maxSize)
+{
+	bitstream->maxSize = maxSize;
+	bitstream->data = (unsigned char *) malloc(bitstream->maxSize * sizeof(unsigned char));
+	bitstream->size = 0;
+}
+
 
 void BitstreamDeconstructor(Bitstream_t *bitstream)
 {
 	free(bitstream->data);
 }
 
-void GetPictureResolutionFromHeader(
+void GetPictureInfoFromHeader(
 	Bitstream_t *bitstream,
 	int *width,
-	int *height)
+	int *height,
+	int *qp)
 {
-	*width = *((unsigned short *)(bitstream->data));
-	*height = *((unsigned short *)(bitstream->data + sizeof(unsigned short)));
+	*width = *((unsigned short *)(bitstream->data + HEADER_WIDTH_OFFSET));
+	*height = *((unsigned short *)(bitstream->data + HEADER_HEIGHT_OFFSET));
+	*qp = *((unsigned char *)(bitstream->data + HEADER_QP_OFFSET));
 
 	//printf("Bitstream Picture Resolution: %dx%d\n", *width, *height);
+}
+
+void GetLZ4LengthFromHeader(
+	Bitstream_t *bitstream,
+	unsigned int *lz4Length)
+{
+	*lz4Length = *((unsigned int *)(bitstream->data + HEADER_LZ4_OFFSET));
 }
 
 void WriteBitstreamToFile(
@@ -66,6 +84,90 @@ void WriteBitstreamToFile(
 
 	//Write the quantized output back to the PI via a serial stream
 	fclose(file_handler);
+}
+
+void OpenBitstreamFromFile(
+	const char *filename,
+	Bitstream_t *inputBitstream,
+	int *pictureWidth,
+	int *pictureHeight,
+	int *qp)
+{
+	FILE *bitstreamFile = fopen(filename, "rb");
+	int fileSize;
+
+	if(bitstreamFile == NULL)
+	{
+		printf("Couldn't open bitstream!\n");
+	}
+
+	// Get total file size
+
+	// Iterate cursor to end of file
+	fseek(bitstreamFile, 0, SEEK_END);
+	// Get cursor position
+	fileSize = ftell(bitstreamFile);
+
+	// Put bitstreamFile cursor back to beginning
+	fseek(bitstreamFile, 0, SEEK_SET);
+
+	// Construct the bitstream based off the filesize
+	BitstreamConstructorMaxSize(
+		inputBitstream, 
+		fileSize);
+
+	// Read the file into inputBitstream
+	fread(inputBitstream->data, 1, fileSize, bitstreamFile);
+	inputBitstream->size = fileSize;
+
+	// Get picture width/ picture height
+	GetPictureInfoFromHeader(
+		inputBitstream, 
+		pictureWidth, 
+		pictureHeight,
+		qp);
+}
+
+
+
+void DecodeBitstream(
+	CodingUnitStructure_t *codingUnitStructure,
+	Bitstream_t *inputBitstream)
+{
+	unsigned char *headerPtr = inputBitstream->data;
+	unsigned char *encodedPMPtr = &(headerPtr[BITSTREAM_HEADER_LEN]);
+	unsigned char *lz4Ptr; // Determined after encoded predictionModesLen is found
+
+	unsigned int lz4Length;
+	int numPredictionModes;
+
+	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
+	
+
+	// Decode Prediction Modes 
+	DecodePredictionModes(
+		codingUnitStructure->bestPredictionModes,
+		&numPredictionModes,
+		encodedPMPtr,
+		numCUs >> NUMBITSPERMODE, 
+		PredictionModeCount);
+
+	// Decode LZ4
+	lz4Ptr = &(encodedPMPtr[numPredictionModes]);
+	GetLZ4LengthFromHeader(
+		inputBitstream, 
+		&lz4Length);
+
+	// Decompress LZ4 into transform coefficients
+	LZ4IO_decompressArray(
+		lz4Ptr, 
+		lz4Length,
+		codingUnitStructure->transformBestBuffer.fullPicturePointer,
+		codingUnitStructure->transformBestBuffer.yuvSize);
+
+
+	
+
 }
 
 
@@ -171,6 +273,7 @@ void DecodePredictionModes(
 // Height (H): 16 bits, describes height of picture
 // Block Width (BW): 8 bits, describes width of blocks used to encode
 // Block Height (BH): 8 bits, describes height of blocks used to encode
+// Quantization Parameter: 8 bits, describes the quantization level of every single CU
 // Transform Coefficients Length (TCL): 32 bits, describes total size taken up by encoded LZ4 transform coeffs
 
 // Header (in order, 1 byte per line):
@@ -183,6 +286,7 @@ void DecodePredictionModes(
 // H.b0
 // BW
 // BH
+// QP
 // TCL.b3
 // TCL.b2
 // TCL.b1
@@ -195,6 +299,7 @@ void WriteHeaderInfo(
 	unsigned short height,
 	unsigned char blockWidth,
 	unsigned char blockHeight,
+	unsigned char qp,
 	unsigned int transformCoeffLen)
 {
 	unsigned char *outputBufferPtr = outputBuffer;
@@ -216,13 +321,18 @@ void WriteHeaderInfo(
 	*outputBufferPtr = blockWidth;
 	outputBufferPtr += sizeof(unsigned char);
 	*bytesWritten += sizeof(unsigned char);
-
+	
 	// Write BlockHeight to bytes 5
 	*outputBufferPtr = blockHeight;
 	outputBufferPtr += sizeof(unsigned char);
 	*bytesWritten += sizeof(unsigned char);
 
-	// Write transformCoeffLen to bytes 9, 8, 7, 6
+	// Write QP to bytes 6
+	*outputBufferPtr = qp;
+	outputBufferPtr += sizeof(unsigned char);
+	*bytesWritten += sizeof(unsigned char);
+
+	// Write transformCoeffLen to bytes 10, 9, 8, 7
 	*((unsigned int*)outputBufferPtr) = transformCoeffLen;
 	outputBufferPtr += sizeof(unsigned int);
 	*bytesWritten += sizeof(unsigned int);
@@ -252,7 +362,8 @@ void EncodeBitstream(
 	PredictionMode_t *predictionModes,
 	int predictionModesLen,
 	int width,
-	int height)
+	int height,
+	int qp)
 {
 	unsigned char *headerPtr = outputBitstream->data;
 	unsigned char *encodedPMPtr = &(headerPtr[BITSTREAM_HEADER_LEN]);
@@ -261,6 +372,8 @@ void EncodeBitstream(
 	int encodedHeaderSize = 0;
 	int encodedPMSize = 0;
 	int encodedLZ4Size;
+
+	int compressionLevel = LZ4_COMPRESSION_LEVEL;
 
 	// Encode Prediction Modes
 	EncodePredictionModes(
@@ -281,7 +394,7 @@ void EncodeBitstream(
 		transformCoeffsSize,
 		lz4Ptr,
 		&encodedLZ4Size,
-		0 // I don't know how to use this input
+		compressionLevel
 		);
 
 	// With encodedLZ4 len now available, write header
@@ -292,6 +405,7 @@ void EncodeBitstream(
 		(unsigned short) height,
 		(unsigned char) CODING_UNIT_WIDTH,
 		(unsigned char) CODING_UNIT_HEIGHT,
+		(unsigned char) qp,
 		(unsigned int) encodedLZ4Size);
 
 

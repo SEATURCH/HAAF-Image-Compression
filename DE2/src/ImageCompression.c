@@ -40,6 +40,19 @@
 
 #endif
 
+#define PICTURE_WIDTH	(1280)
+#define PICTURE_HEIGHT	(720)
+#define PICTURE_QP		(DEFAULT_QP_VALUE)
+
+#define INPUT_YUV_FILE			("Z:\\EncodedFiles\\catlarge.yuv")
+#define OUTPUT_RECON_YUV		("Z:\\EncodedFiles\\recon.yuv")
+#define OUTPUT_BITSTREAM_FILE	("Z:\\EncodedFiles\\catlarge.haaf")
+
+
+#define INPUT_BITSTREAM			("Z:\\EncodedFiles\\catlarge.haaf")
+#define OUTPUT_YUV				("Z:\\EncodedFiles\\Decoded_catlarge.yuv")
+
+
 int main(int argc, char* argv[])
 {
 
@@ -50,9 +63,9 @@ int main(int argc, char* argv[])
 		BufferDescriptor_t inputPicture;
 		Bitstream_t outputBitstream;
 
-		int pictureWidth = DEFAULT_PICTURE_WIDTH;
-		int pictureHeight = DEFAULT_PICTURE_HEIGHT;
-		int requestedQP = DEFAULT_QP_VALUE;
+		int pictureWidth = PICTURE_WIDTH;
+		int pictureHeight = PICTURE_HEIGHT;
+		int requestedQP = PICTURE_QP;
 
 		/*** CONSTRUCTION ***/
 
@@ -93,7 +106,7 @@ int main(int argc, char* argv[])
 	#elif VS_BUILD
 		OpenYUVFileIntoInputPicture(
 			&inputPicture, 
-			"Z:\\EncodedFiles\\Cats_320x240_420.yuv", 
+			INPUT_YUV_FILE, 
 			pictureWidth, 
 			pictureHeight);
 	#endif
@@ -117,7 +130,7 @@ int main(int argc, char* argv[])
 		// Write the bitstream to file
 		WriteBitstreamToFile(
 			&outputBitstream,
-			"Z:\\EncodedFiles\\Cats.haaf");
+			OUTPUT_BITSTREAM_FILE);
 
 		printf("Encode Done\n");
 
@@ -129,7 +142,7 @@ int main(int argc, char* argv[])
 		printf("Send Done\n");
 	#elif VS_BUILD
 		SaveYUVToFile(
-			"Z:\\EncodedFiles\\EncoderReconCats_320x240.yuv", 
+			OUTPUT_RECON_YUV, 
 			&(codingUnitStructure.reconBestBuffer));
 	#endif
 
@@ -154,11 +167,11 @@ int main(int argc, char* argv[])
 		int pictureHeight;
 		int qp;
 
-		const char *inputFile = "Z:\\EncodedFiles\\Cats.haaf";
+		const char *inputFile = INPUT_BITSTREAM;
 
 		/*** CONSTRUCTION ***/
 		OpenBitstreamFromFile(
-			"Z:\\EncodedFiles\\Cats.haaf",
+			inputFile,
 			&inputBitstream,
 			&pictureWidth,
 			&pictureHeight,
@@ -188,7 +201,7 @@ int main(int argc, char* argv[])
 		printf("Send Done\n");
 #elif VS_BUILD
 		SaveYUVToFile(
-			"Z:\\EncodedFiles\\DecodedReconCats_320x240.yuv", 
+			OUTPUT_YUV, 
 			&(codingUnitStructure.reconBestBuffer));
 #endif
 

@@ -140,10 +140,12 @@ void DecodeBitstream(
 
 	unsigned int lz4Length;
 	int numPredictionModes;
-
 	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
-	
 
+	// Short buffer holds our coefficients
+	int saturatedCoeffsSize = (codingUnitStructure->transformBestBuffer.yuvSize >> 1);
+	short *saturatedCoeffs = (short *)malloc(sizeof(short) * saturatedCoeffsSize);
+	
 	// Decode Prediction Modes 
 	DecodePredictionModes(
 		codingUnitStructure->bestPredictionModes,
@@ -162,8 +164,21 @@ void DecodeBitstream(
 	LZ4IO_decompressArray(
 		lz4Ptr, 
 		lz4Length,
-		codingUnitStructure->transformBestBuffer.fullPicturePointer,
-		codingUnitStructure->transformBestBuffer.yuvSize);
+		(unsigned char *) saturatedCoeffs,
+		saturatedCoeffsSize);
+
+	// Saturate short coeffs to int
+	{
+		int bufferCursor;
+		for(bufferCursor = 0; bufferCursor < (codingUnitStructure->transformBestBuffer.yuvSize >> 2); bufferCursor++)
+		{
+			((int *)codingUnitStructure->transformBestBuffer.fullPicturePointer)[bufferCursor] = saturatedCoeffs[bufferCursor];
+		}
+
+	}
+
+
+	free(saturatedCoeffs);
 }
 
 

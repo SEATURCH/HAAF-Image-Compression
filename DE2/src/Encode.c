@@ -683,23 +683,33 @@ void EncodeLoop(
 	// Update the QP value after encoding is finished
 	codingUnitStructure->qp = qpValue;
 }
-
-
 // Requires EncodeLoop has run successfully on codingUnitStructure
 void GenerateBitstream(
 	CodingUnitStructure_t *codingUnitStructure,
 	Bitstream_t *outputBitstream)
 {
 	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
+	int saturatedCoeffsSize = (codingUnitStructure->transformBestBuffer.yuvSize >> 1);
+	short *saturatedCoeffs = (short *)malloc(sizeof(short) * saturatedCoeffsSize);
+	
+	{
+		int bufferCursor;
+		for(bufferCursor = 0; bufferCursor < (codingUnitStructure->transformBestBuffer.yuvSize >> 2); bufferCursor++)
+		{
+			saturatedCoeffs[bufferCursor] = ((int *)codingUnitStructure->transformBestBuffer.fullPicturePointer)[bufferCursor];
+		}
+
+	}
 
 	EncodeBitstream(
 		outputBitstream,
-		(unsigned char *) codingUnitStructure->transformBestBuffer.fullPicturePointer,
-		codingUnitStructure->transformBestBuffer.yuvSize,
+		(unsigned char *)saturatedCoeffs,//(unsigned char *) codingUnitStructure->transformBestBuffer.fullPicturePointer,
+		saturatedCoeffsSize,//codingUnitStructure->transformBestBuffer.yuvSize,
 		codingUnitStructure->bestPredictionModes,
 		numCUs,
 		codingUnitStructure->widthPicture,
 		codingUnitStructure->heightPicture,
 		codingUnitStructure->qp);
 
+	free(saturatedCoeffs);
 }

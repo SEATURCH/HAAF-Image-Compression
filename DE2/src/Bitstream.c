@@ -153,7 +153,7 @@ void DecodeBitstream(
 		PredictionModeCount);
 
 	// Decode LZ4
-	lz4Ptr = &(encodedPMPtr[numPredictionModes]);
+	lz4Ptr = &(encodedPMPtr[numCUs >> NUMBITSPERMODE]);
 	GetLZ4LengthFromHeader(
 		inputBitstream, 
 		&lz4Length);
@@ -164,10 +164,6 @@ void DecodeBitstream(
 		lz4Length,
 		codingUnitStructure->transformBestBuffer.fullPicturePointer,
 		codingUnitStructure->transformBestBuffer.yuvSize);
-
-
-	
-
 }
 
 
@@ -387,6 +383,18 @@ void EncodeBitstream(
 	// Determine lz4Ptr based off encodedPMLen
 	lz4Ptr = &(encodedPMPtr[encodedPMSize]);
 	encodedLZ4Size = outputBitstream->maxSize - encodedPMSize - BITSTREAM_HEADER_LEN;
+	
+	//{
+	//	int i;
+	//	FILE *outputCoeffs;
+	//	outputCoeffs = fopen("Z:\\EncodedFiles\\InputLZ4.txt", "w");
+	//
+	//	for(i = 0; i < (transformCoeffsSize >> 2); i++)
+	//	{
+	//		fprintf(outputCoeffs, "transformCoeffs[%d]: %d\n", i, ((int *)transformCoeffs)[i]);
+	//	}
+	//}
+
 
 	// Encode transformCoeffs into lz4Ptr
 	LZ4IO_compressArray(

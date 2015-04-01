@@ -38,7 +38,7 @@
 #if N2_BUILD
 #define LZ4_COMPRESSION_LEVEL (0)
 #elif VS_BUILD
-#define LZ4_COMPRESSION_LEVEL (10)
+#define LZ4_COMPRESSION_LEVEL (2)
 #endif
 
 /*** MACRO FUNCTIONS ***/

@@ -134,9 +134,9 @@ void DecodeCu(
 	BufferDescriptor_t *reconBestBuffer = &codingUnitStructure->reconBestBuffer;
 
 	// Recon
-	unsigned char *reconBestY = &reconBestBuffer->yBuffer[codingUnit->yBufferOffset];
-	unsigned char *reconBestU = &reconBestBuffer->uBuffer[codingUnit->uvBufferOffset];
-	unsigned char *reconBestV = &reconBestBuffer->vBuffer[codingUnit->uvBufferOffset];
+	unsigned char *reconBestY = &(reconBestBuffer->yBuffer[codingUnit->yBufferOffset]);
+	unsigned char *reconBestU = &(reconBestBuffer->uBuffer[codingUnit->uvBufferOffset]);
+	unsigned char *reconBestV = &(reconBestBuffer->vBuffer[codingUnit->uvBufferOffset]);
 	int reconYStride = reconBestBuffer->yStride;
 	int reconUStride = reconBestBuffer->uStride;
 	int reconVStride = reconBestBuffer->vStride;
@@ -145,9 +145,9 @@ void DecodeCu(
 	int transformStrideY = transformBestBuffer->yStride;
 	int transformStrideU = transformBestBuffer->uStride;
 	int transformStrideV = transformBestBuffer->vStride;
-	unsigned char *transformBestY = &transformBestBuffer->yBuffer[(transformStrideY * cuY) + (cuX * transformBestBuffer->sampleSize)];
-	unsigned char *transformBestU = &transformBestBuffer->uBuffer[(transformStrideU * cuY) + (cuX * transformBestBuffer->sampleSize)];
-	unsigned char *transformBestV = &transformBestBuffer->vBuffer[(transformStrideV * cuY) + (cuX * transformBestBuffer->sampleSize)];
+	unsigned char *transformBestY = &(transformBestBuffer->yBuffer[(transformStrideY * cuY * CODING_UNIT_HEIGHT) + (cuX * CODING_UNIT_WIDTH * transformBestBuffer->sampleSize)]);
+	unsigned char *transformBestU = &(transformBestBuffer->uBuffer[(transformStrideU * cuY * (CODING_UNIT_HEIGHT >> 1)) + (cuX * (CODING_UNIT_WIDTH >> 1) * transformBestBuffer->sampleSize)]);
+	unsigned char *transformBestV = &(transformBestBuffer->vBuffer[(transformStrideV * cuY * (CODING_UNIT_HEIGHT >> 1)) + (cuX * (CODING_UNIT_WIDTH >> 1) * transformBestBuffer->sampleSize)]);
 
 	// Units are in bytes
 	int transformWidth = CODING_UNIT_WIDTH * transformBestBuffer->sampleSize;
@@ -160,6 +160,13 @@ void DecodeCu(
 
 	int predictionMode = codingUnitStructure->bestPredictionModes[cuIndex];
 	
+	// REMOVE ME
+	if(cuIndex == 260)
+	{
+		int s = 1;
+	}
+
+
 	// Copy the samples into the reference buffer
 	CopyReferenceSamples(
 		referenceBuffer, 
@@ -173,11 +180,43 @@ void DecodeCu(
 	///***** DECODING *****/
 	CopyDWordToDWordBuffer(
 		(int *)transformBestY,
-		transformStrideY,
+		transformStrideY >> 2,  // >> 2 because transformStrideY is in bytes!
 		transformBufferDWord,
 		CODING_UNIT_WIDTH,
 		CODING_UNIT_WIDTH,
 		CODING_UNIT_HEIGHT);
+
+	//PrintBlockInt(
+	//	transformBufferDWord,
+	//	CODING_UNIT_WIDTH,
+	//	CODING_UNIT_WIDTH,
+	//	CODING_UNIT_HEIGHT);
+
+	//if(cuIndex == 0){
+	//	int i; 
+	//
+	//	int xCursor;
+	//	int yCursor;
+	//
+	//	for(yCursor = 0; yCursor < 16; yCursor++)
+	//	{
+	//		for(xCursor = 0; xCursor < 16; xCursor++)
+	//		{
+	//			printf("transformBestY[(%d, %d)]: %d\n", xCursor, yCursor, ((int*)transformBestY)[yCursor * transformStrideY + xCursor]);
+	//		}
+	//	}
+	//	
+	//
+	//
+	//
+	//	//for(i = 0; i < 256; i++)
+	//	//{
+	//	//	printf("transformBufferDWord[%d]: %d\n", i, transformBufferDWord[i]);
+	//	//}
+	//
+	//
+	//
+	//}
 
 	Decode(
 		transformBufferDWord, 
@@ -210,15 +249,15 @@ void DecodeCu(
 			reconUStride, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1);
-
+		
 		CopyDWordToDWordBuffer(
 			(int *)transformBestU,
-			transformStrideU,
+			transformStrideU >> 2,   // >> 2 because transformStrideU is in bytes!
 			transformBufferDWord,
 			CODING_UNIT_WIDTH >> 1,
 			CODING_UNIT_WIDTH >> 1,
 			CODING_UNIT_HEIGHT >> 1);
-
+	
 		Decode(
 			transformBufferDWord, 
 			reconBuffer, 
@@ -227,7 +266,7 @@ void DecodeCu(
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
 			qpValue);
-
+	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
 			reconBuffer, 
@@ -252,12 +291,12 @@ void DecodeCu(
 		
 		CopyDWordToDWordBuffer(
 			(int *)transformBestV,
-			transformStrideV,
+			transformStrideV >> 2, // >> 2 because transformStrideV is in bytes, we need dword
 			transformBufferDWord,
 			CODING_UNIT_WIDTH >> 1,
 			CODING_UNIT_WIDTH >> 1,
 			CODING_UNIT_HEIGHT >> 1);
-
+	
 		Decode(
 			transformBufferDWord, 
 			reconBuffer, 
@@ -266,7 +305,7 @@ void DecodeCu(
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
 			qpValue);
-
+	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
 			reconBuffer, 
@@ -289,6 +328,7 @@ void Decode(
 	int qp
 	)
 {
+	CuIntBuffer invQuantizeBuffer;
 	CuIntBuffer invTransformBufferDWord;
 	CuIntBuffer reconBufferDWord;
 	CuBuffer predictionBuffer;
@@ -302,10 +342,28 @@ void Decode(
 
 	/***** DECODE *****/
 	// Decode the transform to determine the cost for the prediction mode
+	
+
+	//// DEBUG
+	//printf("Transform buffer: \n");
+	//PrintBlockInt(
+	//	transformBufferDWord, 
+	//	codingUnitWidth,
+	//	codingUnitWidth,
+	//	codingUnitHeight);
+
+	// Copy transform coeffs into inv quant buffer
+	CopyDWordToDWordBuffer(
+		transformBufferDWord,
+		codingUnitWidth,
+		invQuantizeBuffer,
+		codingUnitWidth,
+		codingUnitWidth,
+		codingUnitHeight);
 
 	// Inverse Quantize
 	QuantizationFuncPtrTable[QuantizeBackward](
-		transformBufferDWord, 
+		invQuantizeBuffer, 
 		codingUnitWidth, 
 		codingUnitWidth, 
 		codingUnitHeight, 
@@ -313,10 +371,18 @@ void Decode(
 
 	// Inverse Transform
 	xITrMxN(
-		transformBufferDWord, 
+		invQuantizeBuffer, 
 		invTransformBufferDWord, 
 		codingUnitWidth, 
 		codingUnitHeight);
+
+	//// DEBUG
+	//printf("Inverse transform buffer: \n");
+	//PrintBlockInt(
+	//	invTransformBufferDWord, 
+	//	CODING_UNIT_WIDTH,
+	//	CODING_UNIT_WIDTH,
+	//	CODING_UNIT_HEIGHT);
 	
 	// Add the prediction to the inverse transform to get the 'actual'
 	CalculateReconDWord(
@@ -398,6 +464,14 @@ void EncodeDecode(
 		codingUnitHeight,
 		qp);
 
+	//{
+	//	int i;
+	//	for(i = 0; i < 256; i++)
+	//	{
+	//		printf("Transform coeff[%d]: %d\n", i, transformBufferDWord[i]);
+	//	}
+	//}
+
 }
 
 void EncodeCu(
@@ -430,9 +504,9 @@ void EncodeCu(
 	int vStride = inputPicture->vStride;
 
 	// Recon
-	unsigned char *reconBestY = &reconBestBuffer->yBuffer[codingUnit->yBufferOffset];
-	unsigned char *reconBestU = &reconBestBuffer->uBuffer[codingUnit->uvBufferOffset];
-	unsigned char *reconBestV = &reconBestBuffer->vBuffer[codingUnit->uvBufferOffset];
+	unsigned char *reconBestY = &(reconBestBuffer->yBuffer[codingUnit->yBufferOffset]);
+	unsigned char *reconBestU = &(reconBestBuffer->uBuffer[codingUnit->uvBufferOffset]);
+	unsigned char *reconBestV = &(reconBestBuffer->vBuffer[codingUnit->uvBufferOffset]);
 	int reconYStride = reconBestBuffer->yStride;
 	int reconUStride = reconBestBuffer->uStride;
 	int reconVStride = reconBestBuffer->vStride;
@@ -441,9 +515,9 @@ void EncodeCu(
 	int transformStrideY = transformBestBuffer->yStride;
 	int transformStrideU = transformBestBuffer->uStride;
 	int transformStrideV = transformBestBuffer->vStride;
-	unsigned char *transformBestY = &transformBestBuffer->yBuffer[(yStride * cuY) + (cuX * transformBestBuffer->sampleSize)];
-	unsigned char *transformBestU = &transformBestBuffer->uBuffer[(uStride * cuY) + (cuX * transformBestBuffer->sampleSize)];
-	unsigned char *transformBestV = &transformBestBuffer->vBuffer[(vStride * cuY) + (cuX * transformBestBuffer->sampleSize)];
+	unsigned char *transformBestY = &(transformBestBuffer->yBuffer[(transformStrideY * cuY * CODING_UNIT_HEIGHT) + (cuX * CODING_UNIT_WIDTH * transformBestBuffer->sampleSize)]);
+	unsigned char *transformBestU = &(transformBestBuffer->uBuffer[(transformStrideU * cuY * (CODING_UNIT_HEIGHT >> 1)) + (cuX * (CODING_UNIT_WIDTH >> 1) * transformBestBuffer->sampleSize)]);
+	unsigned char *transformBestV = &(transformBestBuffer->vBuffer[(transformStrideV * cuY * (CODING_UNIT_HEIGHT >> 1)) + (cuX * (CODING_UNIT_WIDTH >> 1) * transformBestBuffer->sampleSize)]);
 
 	// Units are in bytes
 	int transformWidth = CODING_UNIT_WIDTH * transformBestBuffer->sampleSize;
@@ -455,7 +529,7 @@ void EncodeCu(
 	unsigned char referenceBuffer[CODING_UNIT_REF_BUFFER_SIZE_Y];
 
 	int predictionModeCursor = 0;
-	
+
 	// Copy the samples into the reference buffer
 	CopyReferenceSamples(
 		referenceBuffer, 
@@ -504,13 +578,46 @@ void EncodeCu(
 			// Update the best prediction mode and copy the transform and recon into the buffers
 			codingUnitStructure->bestPredictionModes[cuIndex] = (PredictionMode_t) predictionModeCursor;
 			// Copy transform buffer into transform best buffer
-			CopyBlockByte(
-				(unsigned char *)transformBufferDWord, 
-				CODING_UNIT_WIDTH * sizeof(int), 
-				transformBestY, 
-				transformStrideY, 
-				CODING_UNIT_WIDTH * sizeof(int), 
+			//CopyBlockByte(
+			//	(unsigned char *)transformBufferDWord, 
+			//	CODING_UNIT_WIDTH * sizeof(int), 
+			//	transformBestY, 
+			//	transformStrideY, 
+			//	CODING_UNIT_WIDTH * sizeof(int), 
+			//	CODING_UNIT_HEIGHT);
+
+
+			// PUT ME BACK IN
+			CopyDWordToDWordBuffer(
+				transformBufferDWord, 
+				CODING_UNIT_WIDTH, 
+				(int *)transformBestY, 
+				transformStrideY >> 2,  // >> 2 because transformStrideY is in bytes!
+				CODING_UNIT_WIDTH, 
 				CODING_UNIT_HEIGHT);
+
+			//if(cuIndex == 0)
+			//{
+			//	{
+			//		int i; 
+			//		int xCursor;
+			//		int yCursor;
+			//
+			//		for(yCursor = 0; yCursor < 16; yCursor++)
+			//		{
+			//			for(xCursor = 0; xCursor < 16; xCursor++)
+			//			{
+			//				printf("transformBestY[(%d, %d)]: %d\n", xCursor, yCursor, ((int*)transformBestY)[yCursor * transformStrideY + xCursor]);
+			//			}
+			//		}
+			//
+			//		for(i = 0; i < 256; i++)
+			//		{
+			//			printf("Encoder transformBufferDWord[%d]: %d\n", i, transformBufferDWord[i]);
+			//		}
+			//	}
+			//}
+
 
 			// Copy recon buffer into recon best buffer
 			CopyBlockByte(
@@ -537,7 +644,7 @@ void EncodeCu(
 			uStride, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1);
-
+	
 		EncodeDecode(
 			transformBufferDWord, 
 			reconBuffer, 
@@ -548,16 +655,24 @@ void EncodeCu(
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
 			qpValue);
-
+	
 		// Copy transform buffer into transform best buffer
-		CopyBlockByte(
-			(unsigned char *)transformBufferDWord, 
-			(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
-			transformBestU, 
-			transformStrideU, 
-			(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
+		//CopyBlockByte(
+		//	(unsigned char *)transformBufferDWord, 
+		//	(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
+		//	transformBestU, 
+		//	transformStrideU, 
+		//	(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
+		//	(CODING_UNIT_HEIGHT >> 1));
+		
+		CopyDWordToDWordBuffer(
+			transformBufferDWord, 
+			(CODING_UNIT_WIDTH >> 1), 
+			(int *)transformBestU, 
+			transformStrideU >> 2, // Stride is in Bytes, need dwords 
+			(CODING_UNIT_WIDTH >> 1), 
 			(CODING_UNIT_HEIGHT >> 1));
-
+	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
 			reconBuffer, 
@@ -580,7 +695,7 @@ void EncodeCu(
 			vStride, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1);
-
+	
 		EncodeDecode(
 			transformBufferDWord, 
 			reconBuffer, 
@@ -591,16 +706,24 @@ void EncodeCu(
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
 			qpValue);
-
+	
 		// Copy transform buffer into transform best buffer
-		CopyBlockByte(
-			(unsigned char *)transformBufferDWord, 
-			(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
-			transformBestV, 
-			transformStrideV, 
-			(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
+		//CopyBlockByte(
+		//	(unsigned char *)transformBufferDWord, 
+		//	(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
+		//	transformBestV, 
+		//	transformStrideV, 
+		//	(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
+		//	(CODING_UNIT_HEIGHT >> 1));
+		
+		CopyDWordToDWordBuffer(
+			transformBufferDWord, 
+			(CODING_UNIT_WIDTH >> 1), 
+			(int *)transformBestV, 
+			transformStrideV >> 2, // >> 2 because stride is in Bytes, we need dword
+			(CODING_UNIT_WIDTH >> 1), 
 			(CODING_UNIT_HEIGHT >> 1));
-
+	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
 			reconBuffer, 
@@ -613,7 +736,41 @@ void EncodeCu(
 }
 
 
+void DecodeLoop(
+	CodingUnitStructure_t *codingUnitStructure
+	)
+{
+	int cuCursorX;
+	int cuCursorY;
+	
+	{
+		int i;
+		FILE *outputCoeffs;
+		outputCoeffs = fopen("Z:\\EncodedFiles\\InputDecodeLoop.txt", "w");
+	
+		for(i = 0; i < (codingUnitStructure->transformBestBuffer.yuvSize >> 2); i++)
+		{
+			fprintf(outputCoeffs, "transformCoeffs[%d]: %d\n", i, ((int *)codingUnitStructure->transformBestBuffer.fullPicturePointer)[i]);
+		}
+	}
 
+	// Loop through each CU in raster scan.
+	// We can do it in this Raster-Scan order since we are single-threaded.
+	// We could parallelize by doing this loop in Z-Scan order.
+	for(cuCursorY = 0; cuCursorY < codingUnitStructure->numCusHeight; cuCursorY++)
+	{
+		for(cuCursorX = 0; cuCursorX < codingUnitStructure->numCusWidth; cuCursorX++)
+		{
+			DecodeCu(
+				codingUnitStructure, 
+				cuCursorX, 
+				cuCursorY,
+				codingUnitStructure->qp);
+
+			printf("Finished Decoding %d/%d CU's!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
+		}
+	}
+}
 
 
 void EncodeLoop(
@@ -636,132 +793,23 @@ void EncodeLoop(
 				cuCursorX, 
 				cuCursorY,
 				qpValue);
-
 			printf("Finished %d/%d CU's!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
 		}
 	}
+	
+	//{
+	//	int i;
+	//	FILE *outputCoeffs;
+	//	outputCoeffs = fopen("Z:\\EncodedFiles\\OutputEncodeLoop.txt", "w");
+	//
+	//	for(i = 0; i < (codingUnitStructure->transformBestBuffer.yuvSize >> 2); i++)
+	//	{
+	//		fprintf(outputCoeffs, "transformCoeffs[%d]: %d\n", i, ((int *)codingUnitStructure->transformBestBuffer.fullPicturePointer)[i]);
+	//	}
+	//}
 
 	// Update the QP value after encoding is finished
 	codingUnitStructure->qp = qpValue;
-
-
-	//// Binary Code the transformBestBuffer and predictionModes
-	//// TODO: Import LZ4 library into codebase
-	//{
-	//	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
-	//	// 300: Total number of prediction modes for 320x240
-	//	unsigned char outputBuffer[300];
-	//	int outputBufferLen;
-	//
-	//	PredictionMode_t predictionModeBuffer[300];
-	//	int numPredictionModes;
-	//
-	//	int predCursor = 0;
-	//
-	//	// Testing encoding Prediction Modes
-	//	EncodePredictionModes(
-	//		outputBuffer,
-	//		&outputBufferLen,
-	//		codingUnitStructure->bestPredictionModes,
-	//		numCUs,
-	//		PredictionModeCount);
-	//
-	//	// Test decoding of Prediction Modes
-	//	DecodePredictionModes(
-	//		predictionModeBuffer,
-	//		&numPredictionModes,
-	//		outputBuffer,
-	//		outputBufferLen,
-	//		PredictionModeCount);
-	//
-	//	for(predCursor = 0; predCursor < numCUs; predCursor++)
-	//	{
-	//		if(codingUnitStructure->bestPredictionModes[predCursor] != predictionModeBuffer[predCursor])
-	//		{
-	//			printf("F*CKKKKKK!\n");
-	//		}
-	//	}
-	//
-	//}
-
-
-
-
-//#define TESTBUFFERSIZE (((320*240)*3)/2)*4
-//	// this will probably not work...
-//	{
-//		int uncompressedBufferSize = TESTBUFFERSIZE;
-//		unsigned char *transformCoeffs = codingUnitStructure->transformBestBuffer.fullPicturePointer;
-//		unsigned char binaryCodingBuffer[TESTBUFFERSIZE];
-//		unsigned char uncompressedBuffer[TESTBUFFERSIZE];
-//		int binaryCodingBufferSize;
-//		int i;
-//		int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
-//
-//		
-//		PredictionMode_t *bcPredictionModes;
-//		int bcPredictionModesSize;
-//		PredictionMode_t *uncompressedPredictionModes;
-//		
-//		bcPredictionModes = (PredictionMode_t *) malloc(numCUs * sizeof(PredictionMode_t));
-//		uncompressedPredictionModes = (PredictionMode_t *) malloc(numCUs * sizeof(PredictionMode_t));
-//
-//
-//		// Transform Coeffs
-//		LZ4IO_compressArray(
-//			codingUnitStructure->transformBestBuffer.fullPicturePointer, 
-//			uncompressedBufferSize,
-//			binaryCodingBuffer,
-//			&binaryCodingBufferSize,
-//			0 // I don't know how to use this input
-//			);
-//
-//		LZ4IO_decompressArray(
-//			binaryCodingBuffer, 
-//			binaryCodingBufferSize,
-//			uncompressedBuffer,
-//			uncompressedBufferSize);
-//		
-//		// Check uncompressed transform coeffs
-//		for(i = 0; i < uncompressedBufferSize; i++)
-//		{
-//			if(transformCoeffs[i] != uncompressedBuffer[i])
-//			{
-//				printf("Fuck!!!\n");
-//			} 
-//		}
-//
-//		// Prediction Modes
-//		LZ4IO_compressArray(
-//			(unsigned char *) codingUnitStructure->bestPredictionModes, 
-//			numCUs * sizeof(PredictionMode_t),
-//			(unsigned char *) bcPredictionModes,
-//			&bcPredictionModesSize,
-//			0 // I don't know how to use this input
-//			);
-//
-//		LZ4IO_decompressArray(
-//			(unsigned char *) bcPredictionModes, 
-//			bcPredictionModesSize,
-//			(unsigned char *) uncompressedPredictionModes,
-//			numCUs * sizeof(PredictionMode_t));
-//		
-//		for(i = 0; i < numCUs; i++)
-//		{
-//			if(codingUnitStructure->bestPredictionModes[i] != uncompressedPredictionModes[i])
-//			{
-//				printf("Fuck!!!\n");
-//			} 
-//		}
-//
-//
-//		printf("done encoding!\n");
-//		codingUnitStructure->transformBestBuffer;
-//
-//		free(bcPredictionModes);
-//		free(uncompressedPredictionModes);
-//}
-
 }
 
 

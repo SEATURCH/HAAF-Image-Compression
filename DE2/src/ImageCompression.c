@@ -119,6 +119,22 @@ int main(int argc, char* argv[])
 			&outputBitstream,
 			"Z:\\EncodedFiles\\Cats.haaf");
 
+//		{
+//#define VALID_VALUE_RANGE	5000000
+//			int i;
+//
+//			for(i = 0; i < /*(codingUnitStructure.transformBestBuffer.yuvSize / 4)*/1000; i++)
+//			{
+//				int sampleValue = ((int *)codingUnitStructure.transformBestBuffer.fullPicturePointer)[i];
+//				printf("%d: %d\n", i, sampleValue);
+//				if( sampleValue > VALID_VALUE_RANGE ||
+//					sampleValue < -VALID_VALUE_RANGE)
+//				{
+//					//printf("FUCK\n");
+//				}
+//			}
+//		}
+
 
 		printf("Encode Done\n");
 
@@ -130,7 +146,7 @@ int main(int argc, char* argv[])
 		printf("Send Done\n");
 	#elif VS_BUILD
 		SaveYUVToFile(
-			"Z:\\EncodedFiles\\ReconCats_320x240.yuv", 
+			"Z:\\EncodedFiles\\EncoderReconCats_320x240.yuv", 
 			&(codingUnitStructure.reconBestBuffer));
 	#endif
 
@@ -177,19 +193,44 @@ int main(int argc, char* argv[])
 			&codingUnitStructure, 
 			&inputBitstream);
 
+		codingUnitStructure.qp = qp;
 
-		//int width, height;
-		//GetPictureInfoFromHeader(
-		//	&outputBitstream,
-		//	&width,
-		//	&height);
 
-		// Deconstruct current structure, we want
-		//CodingUnitStructureConstructor(
-		//	&codingUnitStructure, 
-		//	width, 
-		//	height);
+//		{
+//#define VALID_VALUE_RANGE	5000000
+//			int i;
+//
+//			for(i = 0; i < /*(codingUnitStructure.transformBestBuffer.yuvSize / 4)*/1000; i++)
+//			{
+//				int sampleValue = ((int *)codingUnitStructure.transformBestBuffer.fullPicturePointer)[i];
+//				printf("%d: %d\n", i, sampleValue);
+//				if( sampleValue > VALID_VALUE_RANGE ||
+//					sampleValue < -VALID_VALUE_RANGE)
+//				{
+//					//printf("FUCK\n");
+//				}
+//			}
+//		}
 
+		DecodeLoop(&codingUnitStructure);
+
+	// Output the picture
+#if N2_BUILD
+		OpenReconBestIntoSerialYUV(&codingUnitStructure.reconBestBuffer, sendBuffer, DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
+		printf("Sending\n");
+		Send(sendBuffer);
+		printf("Send Done\n");
+#elif VS_BUILD
+		SaveYUVToFile(
+			"Z:\\EncodedFiles\\DecodedReconCats_320x240.yuv", 
+			&(codingUnitStructure.reconBestBuffer));
+#endif
+
+
+		/*** DECONSTRUCTION ***/
+		
+		CodingUnitStructureDeconstructor(&codingUnitStructure);
+		BitstreamDeconstructor(&inputBitstream);
 		
 	}
 

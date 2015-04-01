@@ -157,7 +157,7 @@ void CopyDWordToDWordBuffer(
 	int srcStride, 
 	int *dst, 
 	int dstStride, 
-	int width, 
+	int width,
 	int height)
 {
 	int widthCursor = 0;
@@ -168,6 +168,7 @@ void CopyDWordToDWordBuffer(
 		for(widthCursor = 0; widthCursor < width; widthCursor++)
 		{
 			dst[(heightCursor * dstStride) + widthCursor] = src[(heightCursor * srcStride) + widthCursor];
+			//printf("(%d, %d), dst: %d, src : %d\n", widthCursor, heightCursor, dst[(heightCursor * dstStride) + widthCursor], src[(heightCursor * srcStride) + widthCursor]);
 		}
 	}
 }

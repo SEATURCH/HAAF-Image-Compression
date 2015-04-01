@@ -50,6 +50,11 @@ void EncodeCu(
 	int cuX, 
 	int cuY,
 	int qpValue);
+
+void DecodeLoop(
+	CodingUnitStructure_t *codingUnitStructure
+	);
+
 void EncodeLoop(
 	CodingUnitStructure_t *codingUnitStructure,
 	int qpValue);

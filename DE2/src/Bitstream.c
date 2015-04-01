@@ -384,18 +384,6 @@ void EncodeBitstream(
 	lz4Ptr = &(encodedPMPtr[encodedPMSize]);
 	encodedLZ4Size = outputBitstream->maxSize - encodedPMSize - BITSTREAM_HEADER_LEN;
 	
-	//{
-	//	int i;
-	//	FILE *outputCoeffs;
-	//	outputCoeffs = fopen("Z:\\EncodedFiles\\InputLZ4.txt", "w");
-	//
-	//	for(i = 0; i < (transformCoeffsSize >> 2); i++)
-	//	{
-	//		fprintf(outputCoeffs, "transformCoeffs[%d]: %d\n", i, ((int *)transformCoeffs)[i]);
-	//	}
-	//}
-
-
 	// Encode transformCoeffs into lz4Ptr
 	LZ4IO_compressArray(
 		transformCoeffs, 

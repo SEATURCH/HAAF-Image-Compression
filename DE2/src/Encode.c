@@ -160,13 +160,6 @@ void DecodeCu(
 
 	int predictionMode = codingUnitStructure->bestPredictionModes[cuIndex];
 	
-	// REMOVE ME
-	if(cuIndex == 260)
-	{
-		int s = 1;
-	}
-
-
 	// Copy the samples into the reference buffer
 	CopyReferenceSamples(
 		referenceBuffer, 
@@ -185,38 +178,6 @@ void DecodeCu(
 		CODING_UNIT_WIDTH,
 		CODING_UNIT_WIDTH,
 		CODING_UNIT_HEIGHT);
-
-	//PrintBlockInt(
-	//	transformBufferDWord,
-	//	CODING_UNIT_WIDTH,
-	//	CODING_UNIT_WIDTH,
-	//	CODING_UNIT_HEIGHT);
-
-	//if(cuIndex == 0){
-	//	int i; 
-	//
-	//	int xCursor;
-	//	int yCursor;
-	//
-	//	for(yCursor = 0; yCursor < 16; yCursor++)
-	//	{
-	//		for(xCursor = 0; xCursor < 16; xCursor++)
-	//		{
-	//			printf("transformBestY[(%d, %d)]: %d\n", xCursor, yCursor, ((int*)transformBestY)[yCursor * transformStrideY + xCursor]);
-	//		}
-	//	}
-	//	
-	//
-	//
-	//
-	//	//for(i = 0; i < 256; i++)
-	//	//{
-	//	//	printf("transformBufferDWord[%d]: %d\n", i, transformBufferDWord[i]);
-	//	//}
-	//
-	//
-	//
-	//}
 
 	Decode(
 		transformBufferDWord, 
@@ -341,17 +302,6 @@ void Decode(
 		codingUnitWidth);
 
 	/***** DECODE *****/
-	// Decode the transform to determine the cost for the prediction mode
-	
-
-	//// DEBUG
-	//printf("Transform buffer: \n");
-	//PrintBlockInt(
-	//	transformBufferDWord, 
-	//	codingUnitWidth,
-	//	codingUnitWidth,
-	//	codingUnitHeight);
-
 	// Copy transform coeffs into inv quant buffer
 	CopyDWordToDWordBuffer(
 		transformBufferDWord,
@@ -376,14 +326,6 @@ void Decode(
 		codingUnitWidth, 
 		codingUnitHeight);
 
-	//// DEBUG
-	//printf("Inverse transform buffer: \n");
-	//PrintBlockInt(
-	//	invTransformBufferDWord, 
-	//	CODING_UNIT_WIDTH,
-	//	CODING_UNIT_WIDTH,
-	//	CODING_UNIT_HEIGHT);
-	
 	// Add the prediction to the inverse transform to get the 'actual'
 	CalculateReconDWord(
 		reconBufferDWord, 
@@ -463,15 +405,6 @@ void EncodeDecode(
 		codingUnitWidth,
 		codingUnitHeight,
 		qp);
-
-	//{
-	//	int i;
-	//	for(i = 0; i < 256; i++)
-	//	{
-	//		printf("Transform coeff[%d]: %d\n", i, transformBufferDWord[i]);
-	//	}
-	//}
-
 }
 
 void EncodeCu(
@@ -540,8 +473,6 @@ void EncodeCu(
 		CODING_UNIT_WIDTH, 
 		CODING_UNIT_HEIGHT);
 
-	//printf("Position: (%d, %d)\n", cuX, cuY);
-
 	// Prediction Mode Loop
 	for(predictionModeCursor = 0; predictionModeCursor < PredictionModeCount; predictionModeCursor++)
 	{
@@ -577,17 +508,8 @@ void EncodeCu(
 		{
 			// Update the best prediction mode and copy the transform and recon into the buffers
 			codingUnitStructure->bestPredictionModes[cuIndex] = (PredictionMode_t) predictionModeCursor;
+
 			// Copy transform buffer into transform best buffer
-			//CopyBlockByte(
-			//	(unsigned char *)transformBufferDWord, 
-			//	CODING_UNIT_WIDTH * sizeof(int), 
-			//	transformBestY, 
-			//	transformStrideY, 
-			//	CODING_UNIT_WIDTH * sizeof(int), 
-			//	CODING_UNIT_HEIGHT);
-
-
-			// PUT ME BACK IN
 			CopyDWordToDWordBuffer(
 				transformBufferDWord, 
 				CODING_UNIT_WIDTH, 
@@ -595,29 +517,6 @@ void EncodeCu(
 				transformStrideY >> 2,  // >> 2 because transformStrideY is in bytes!
 				CODING_UNIT_WIDTH, 
 				CODING_UNIT_HEIGHT);
-
-			//if(cuIndex == 0)
-			//{
-			//	{
-			//		int i; 
-			//		int xCursor;
-			//		int yCursor;
-			//
-			//		for(yCursor = 0; yCursor < 16; yCursor++)
-			//		{
-			//			for(xCursor = 0; xCursor < 16; xCursor++)
-			//			{
-			//				printf("transformBestY[(%d, %d)]: %d\n", xCursor, yCursor, ((int*)transformBestY)[yCursor * transformStrideY + xCursor]);
-			//			}
-			//		}
-			//
-			//		for(i = 0; i < 256; i++)
-			//		{
-			//			printf("Encoder transformBufferDWord[%d]: %d\n", i, transformBufferDWord[i]);
-			//		}
-			//	}
-			//}
-
 
 			// Copy recon buffer into recon best buffer
 			CopyBlockByte(
@@ -657,14 +556,6 @@ void EncodeCu(
 			qpValue);
 	
 		// Copy transform buffer into transform best buffer
-		//CopyBlockByte(
-		//	(unsigned char *)transformBufferDWord, 
-		//	(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
-		//	transformBestU, 
-		//	transformStrideU, 
-		//	(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
-		//	(CODING_UNIT_HEIGHT >> 1));
-		
 		CopyDWordToDWordBuffer(
 			transformBufferDWord, 
 			(CODING_UNIT_WIDTH >> 1), 
@@ -708,14 +599,6 @@ void EncodeCu(
 			qpValue);
 	
 		// Copy transform buffer into transform best buffer
-		//CopyBlockByte(
-		//	(unsigned char *)transformBufferDWord, 
-		//	(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
-		//	transformBestV, 
-		//	transformStrideV, 
-		//	(CODING_UNIT_WIDTH >> 1) * sizeof(int), 
-		//	(CODING_UNIT_HEIGHT >> 1));
-		
 		CopyDWordToDWordBuffer(
 			transformBufferDWord, 
 			(CODING_UNIT_WIDTH >> 1), 
@@ -796,17 +679,6 @@ void EncodeLoop(
 			printf("Finished %d/%d CU's!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
 		}
 	}
-	
-	//{
-	//	int i;
-	//	FILE *outputCoeffs;
-	//	outputCoeffs = fopen("Z:\\EncodedFiles\\OutputEncodeLoop.txt", "w");
-	//
-	//	for(i = 0; i < (codingUnitStructure->transformBestBuffer.yuvSize >> 2); i++)
-	//	{
-	//		fprintf(outputCoeffs, "transformCoeffs[%d]: %d\n", i, ((int *)codingUnitStructure->transformBestBuffer.fullPicturePointer)[i]);
-	//	}
-	//}
 
 	// Update the QP value after encoding is finished
 	codingUnitStructure->qp = qpValue;

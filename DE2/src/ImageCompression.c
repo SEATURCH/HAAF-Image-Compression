@@ -119,23 +119,6 @@ int main(int argc, char* argv[])
 			&outputBitstream,
 			"Z:\\EncodedFiles\\Cats.haaf");
 
-//		{
-//#define VALID_VALUE_RANGE	5000000
-//			int i;
-//
-//			for(i = 0; i < /*(codingUnitStructure.transformBestBuffer.yuvSize / 4)*/1000; i++)
-//			{
-//				int sampleValue = ((int *)codingUnitStructure.transformBestBuffer.fullPicturePointer)[i];
-//				printf("%d: %d\n", i, sampleValue);
-//				if( sampleValue > VALID_VALUE_RANGE ||
-//					sampleValue < -VALID_VALUE_RANGE)
-//				{
-//					//printf("FUCK\n");
-//				}
-//			}
-//		}
-
-
 		printf("Encode Done\n");
 
 		// Output the picture

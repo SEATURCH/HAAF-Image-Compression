@@ -414,21 +414,19 @@ void EncodeCu(
 	int qpValue)
 {
 	// Encode Buffers
-	CuIntBuffer transformBufferDWord;
+	CuIntBuffer transformBufferDWord[PredictionModeCount];
 
 	// Decode Buffers (Mode Decision)
-	CuBuffer reconBuffer; // Will be compared to Actual Picture
+	CuBuffer reconBuffer[PredictionModeCount]; // Will be compared to Actual Picture
 
 	int cuIndex = (cuY * codingUnitStructure->numCusWidth) + cuX;
 
 	// pointer to the input Picture at the CU's location
 	CodingUnit_t *codingUnit = &codingUnitStructure->codingUnits[cuIndex];
 
-	BufferDescriptor_t *inputPicture = codingUnitStructure->inputPicture;
-	BufferDescriptor_t *transformBestBuffer = &codingUnitStructure->transformBestBuffer;
-	BufferDescriptor_t *reconBestBuffer = &codingUnitStructure->reconBestBuffer;
 
 	// Unsigned Char Blocks
+	BufferDescriptor_t *inputPicture = codingUnitStructure->inputPicture;
 	unsigned char *inputY = &(inputPicture->yBuffer[codingUnit->yBufferOffset]);
 	unsigned char *inputU = &(inputPicture->uBuffer[codingUnit->uvBufferOffset]);
 	unsigned char *inputV = &(inputPicture->vBuffer[codingUnit->uvBufferOffset]);
@@ -436,24 +434,26 @@ void EncodeCu(
 	int uStride = inputPicture->uStride;
 	int vStride = inputPicture->vStride;
 
-	// Recon
-	unsigned char *reconBestY = &(reconBestBuffer->yBuffer[codingUnit->yBufferOffset]);
-	unsigned char *reconBestU = &(reconBestBuffer->uBuffer[codingUnit->uvBufferOffset]);
-	unsigned char *reconBestV = &(reconBestBuffer->vBuffer[codingUnit->uvBufferOffset]);
-	int reconYStride = reconBestBuffer->yStride;
-	int reconUStride = reconBestBuffer->uStride;
-	int reconVStride = reconBestBuffer->vStride;
-
 	// Transform Int Blocks (uses custom offset since it is in int space
+	BufferDescriptor_t *transformBestBuffer = &codingUnitStructure->transformBestBuffer;
 	int transformStrideY = transformBestBuffer->yStride;
 	int transformStrideU = transformBestBuffer->uStride;
 	int transformStrideV = transformBestBuffer->vStride;
 	unsigned char *transformBestY = &(transformBestBuffer->yBuffer[(transformStrideY * cuY * CODING_UNIT_HEIGHT) + (cuX * CODING_UNIT_WIDTH * transformBestBuffer->sampleSize)]);
 	unsigned char *transformBestU = &(transformBestBuffer->uBuffer[(transformStrideU * cuY * (CODING_UNIT_HEIGHT >> 1)) + (cuX * (CODING_UNIT_WIDTH >> 1) * transformBestBuffer->sampleSize)]);
 	unsigned char *transformBestV = &(transformBestBuffer->vBuffer[(transformStrideV * cuY * (CODING_UNIT_HEIGHT >> 1)) + (cuX * (CODING_UNIT_WIDTH >> 1) * transformBestBuffer->sampleSize)]);
-
+	
 	// Units are in bytes
 	int transformWidth = CODING_UNIT_WIDTH * transformBestBuffer->sampleSize;
+
+	// Recon
+	BufferDescriptor_t *reconBestBuffer = &codingUnitStructure->reconBestBuffer;
+	unsigned char *reconBestY = &(reconBestBuffer->yBuffer[codingUnit->yBufferOffset]);
+	unsigned char *reconBestU = &(reconBestBuffer->uBuffer[codingUnit->uvBufferOffset]);
+	unsigned char *reconBestV = &(reconBestBuffer->vBuffer[codingUnit->uvBufferOffset]);
+	int reconYStride = reconBestBuffer->yStride;
+	int reconUStride = reconBestBuffer->uStride;
+	int reconVStride = reconBestBuffer->vStride;
 
 	// Will contain the reference for the CU
 	// [0] : pixel offset (-1, -1) from CU start
@@ -480,8 +480,8 @@ void EncodeCu(
 
 		///***** ENCODING/DECODING *****/
 		EncodeDecode(
-			transformBufferDWord, 
-			reconBuffer, 
+			transformBufferDWord[predictionModeCursor], 
+			reconBuffer[predictionModeCursor], 
 			inputY, 
 			yStride, 
 			referenceBuffer, 
@@ -496,7 +496,7 @@ void EncodeCu(
 		currentPredictionModeCost = ComputeCost(
 										inputY, 
 										yStride, 
-										reconBuffer, 
+										reconBuffer[predictionModeCursor], 
 										CODING_UNIT_WIDTH, 
 										CODING_UNIT_WIDTH, 
 										CODING_UNIT_HEIGHT);
@@ -508,32 +508,34 @@ void EncodeCu(
 		{
 			// Update the best prediction mode and copy the transform and recon into the buffers
 			codingUnitStructure->bestPredictionModes[cuIndex] = (PredictionMode_t) predictionModeCursor;
-
-			// Copy transform buffer into transform best buffer
-			CopyDWordToDWordBuffer(
-				transformBufferDWord, 
-				CODING_UNIT_WIDTH, 
-				(int *)transformBestY, 
-				transformStrideY >> 2,  // >> 2 because transformStrideY is in bytes!
-				CODING_UNIT_WIDTH, 
-				CODING_UNIT_HEIGHT);
-
-			// Copy recon buffer into recon best buffer
-			CopyBlockByte(
-				reconBuffer, 
-				CODING_UNIT_WIDTH, 
-				reconBestY, 
-				reconYStride, 
-				CODING_UNIT_WIDTH, 
-				CODING_UNIT_HEIGHT);
 		}
 	}
 
+	// Copy over the best prediction mode for Y
+	predictionModeCursor = codingUnitStructure->bestPredictionModes[cuIndex];
+	{
+		// Copy transform buffer into transform best buffer
+		CopyDWordToDWordBuffer(
+			transformBufferDWord[codingUnitStructure->bestPredictionModes[cuIndex]], 
+			CODING_UNIT_WIDTH, 
+			(int *)transformBestY, 
+			transformStrideY >> 2,  // >> 2 because transformStrideY is in bytes!
+			CODING_UNIT_WIDTH, 
+			CODING_UNIT_HEIGHT);
+	
+		// Copy recon buffer into recon best buffer
+		CopyBlockByte(
+			reconBuffer[codingUnitStructure->bestPredictionModes[cuIndex]], 
+			CODING_UNIT_WIDTH, 
+			reconBestY, 
+			reconYStride, 
+			CODING_UNIT_WIDTH, 
+			CODING_UNIT_HEIGHT);
+	}
 
 	// Encode U and V according to bestPredictionModes (determined from Y in previous loop)
 	/***** U *****/
 	{
-		predictionModeCursor = codingUnitStructure->bestPredictionModes[cuIndex];
 		// Copy the samples into the reference buffer
 		CopyReferenceSamples(
 			referenceBuffer, 
@@ -545,8 +547,8 @@ void EncodeCu(
 			CODING_UNIT_HEIGHT >> 1);
 	
 		EncodeDecode(
-			transformBufferDWord, 
-			reconBuffer, 
+			transformBufferDWord[predictionModeCursor], 
+			reconBuffer[predictionModeCursor], 
 			inputU, 
 			uStride, 
 			referenceBuffer, 
@@ -557,16 +559,16 @@ void EncodeCu(
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(
-			transformBufferDWord, 
+			transformBufferDWord[predictionModeCursor], 
 			(CODING_UNIT_WIDTH >> 1), 
 			(int *)transformBestU, 
 			transformStrideU >> 2, // Stride is in Bytes, need dwords 
 			(CODING_UNIT_WIDTH >> 1), 
 			(CODING_UNIT_HEIGHT >> 1));
-	
+
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
-			reconBuffer, 
+			reconBuffer[predictionModeCursor], 
 			(CODING_UNIT_WIDTH >> 1), 
 			reconBestU, 
 			reconUStride, 
@@ -576,7 +578,6 @@ void EncodeCu(
 	
 	/***** V *****/
 	{
-		predictionModeCursor = codingUnitStructure->bestPredictionModes[cuIndex] ;
 		// Copy the samples into the reference buffer
 		CopyReferenceSamples(
 			referenceBuffer, 
@@ -588,8 +589,8 @@ void EncodeCu(
 			CODING_UNIT_HEIGHT >> 1);
 	
 		EncodeDecode(
-			transformBufferDWord, 
-			reconBuffer, 
+			transformBufferDWord[predictionModeCursor], 
+			reconBuffer[predictionModeCursor], 
 			inputV, 
 			vStride, 
 			referenceBuffer, 
@@ -600,16 +601,16 @@ void EncodeCu(
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(
-			transformBufferDWord, 
+			transformBufferDWord[predictionModeCursor], 
 			(CODING_UNIT_WIDTH >> 1), 
 			(int *)transformBestV, 
 			transformStrideV >> 2, // >> 2 because stride is in Bytes, we need dword
 			(CODING_UNIT_WIDTH >> 1), 
 			(CODING_UNIT_HEIGHT >> 1));
-	
+
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
-			reconBuffer, 
+			reconBuffer[predictionModeCursor], 
 			(CODING_UNIT_WIDTH >> 1), 
 			reconBestV, 
 			reconVStride, 

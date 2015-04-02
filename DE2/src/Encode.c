@@ -626,17 +626,6 @@ void DecodeLoop(
 {
 	int cuCursorX;
 	int cuCursorY;
-	
-	{
-		int i;
-		FILE *outputCoeffs;
-		outputCoeffs = fopen("Z:\\EncodedFiles\\InputDecodeLoop.txt", "w");
-	
-		for(i = 0; i < (codingUnitStructure->transformBestBuffer.yuvSize >> 2); i++)
-		{
-			fprintf(outputCoeffs, "transformCoeffs[%d]: %d\n", i, ((int *)codingUnitStructure->transformBestBuffer.fullPicturePointer)[i]);
-		}
-	}
 
 	// Loop through each CU in raster scan.
 	// We can do it in this Raster-Scan order since we are single-threaded.

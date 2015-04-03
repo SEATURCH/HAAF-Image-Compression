@@ -125,6 +125,50 @@ void CodingUnitStructureConstructor(
 		}
 	}
 	//InitConvertToBit();
+	
+#if USE_REAL_QUANTIZATION
+	// Initialize Quantization Tables
+	{
+
+		// Quantization Multipliers
+		int QPT0 = QPP[QP_BASE][0] / QP_MULT;
+		int QPT1 = QPP[QP_BASE][1] / QP_MULT;
+		int QPT2 = QPP[QP_BASE][2] / QP_MULT;
+
+		// Inverse Quantization Multipliers
+		int IQPT0 = IQPP[QP_BASE][0] * QP_MULT;
+		int IQPT1 = IQPP[QP_BASE][1] * QP_MULT;
+		int IQPT2 = IQPP[QP_BASE][2] * QP_MULT;
+
+		int quantCursor = 0;
+
+		
+		printf("QPT[0]: %d\nQPT[1]: %d\nQPT[2]: %d\n\n", QPT0, QPT1, QPT2);
+		printf("IQPT[0]: %d\nIQPT[1]: %d\nIQPT[2]: %d\n\n", IQPT0, IQPT1, IQPT2);
+		printf("QBITS: %d\nQBITS_ROUND: %d\n\n", QBITS, QBITS_ROUND);
+
+		// 0th row, even vals
+		for(quantCursor = 0; quantCursor < CODING_UNIT_WIDTH; quantCursor += 2)
+		{
+			codingUnitStructure->QuantTable[0][quantCursor] = QPT0;
+			codingUnitStructure->IQuantTable[0][quantCursor] = IQPT0;
+
+			codingUnitStructure->QuantTable[1][quantCursor] = QPT2;
+			codingUnitStructure->IQuantTable[1][quantCursor] = IQPT2;
+		}
+
+		for(quantCursor = 1; quantCursor < CODING_UNIT_WIDTH; quantCursor += 2)
+		{
+			codingUnitStructure->QuantTable[0][quantCursor] = QPT2;
+			codingUnitStructure->IQuantTable[0][quantCursor] = IQPT2;
+
+			codingUnitStructure->QuantTable[1][quantCursor] = QPT1;
+			codingUnitStructure->IQuantTable[1][quantCursor] = IQPT1;
+		}
+
+	}
+#endif
+	
 }
 
 void CodingUnitStructureDeconstructor(CodingUnitStructure_t *codingUnitStructure)

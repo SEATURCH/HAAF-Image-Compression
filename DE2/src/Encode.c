@@ -105,6 +105,7 @@ int ComputeCost(
 		{
 			int difference = input[cursorY*inputStride + cursorX] - recon[cursorY*reconStride + cursorX];
 			cost += (difference * difference);
+			//cost += (difference << (difference >> 4));
 		}
 	}
 
@@ -151,6 +152,12 @@ void DecodeCu(
 
 	// Units are in bytes
 	int transformWidth = CODING_UNIT_WIDTH * transformBestBuffer->sampleSize;
+	
+#if USE_REAL_QUANTIZATION
+	// Quant/IQuant tables
+	int (*quantTable)[CODING_UNIT_WIDTH] = codingUnitStructure->QuantTable;
+	int (*iQuantTable)[CODING_UNIT_WIDTH] = codingUnitStructure->IQuantTable;
+#endif
 
 	// Will contain the reference for the CU
 	// [0] : pixel offset (-1, -1) from CU start
@@ -186,7 +193,12 @@ void DecodeCu(
 		predictionMode, 
 		CODING_UNIT_WIDTH, 
 		CODING_UNIT_HEIGHT,
-		qpValue);
+#if USE_REAL_QUANTIZATION
+			iQuantTable
+#else
+			qpValue
+#endif
+		);
 
 	// Copy recon buffer into recon best buffer
 	CopyBlockByte(
@@ -226,7 +238,12 @@ void DecodeCu(
 			predictionMode, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			qpValue);
+#if USE_REAL_QUANTIZATION
+			iQuantTable
+#else
+			qpValue
+#endif
+			);
 	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
@@ -265,7 +282,12 @@ void DecodeCu(
 			predictionMode, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			qpValue);
+#if USE_REAL_QUANTIZATION
+			iQuantTable
+#else
+			qpValue
+#endif
+			);
 	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
@@ -286,7 +308,11 @@ void Decode(
 	int predictionMode, 
 	int codingUnitWidth,
 	int codingUnitHeight,
+#if USE_REAL_QUANTIZATION
+	int (*iQuantTable)[CODING_UNIT_WIDTH]
+#else
 	int qp
+#endif
 	)
 {
 	CuIntBuffer invQuantizeBuffer;
@@ -317,7 +343,12 @@ void Decode(
 		codingUnitWidth, 
 		codingUnitWidth, 
 		codingUnitHeight, 
-		qp);
+#if USE_REAL_QUANTIZATION
+		iQuantTable
+#else
+		qp
+#endif
+		);
 
 	// Inverse Transform
 	xITrMxN(
@@ -356,7 +387,13 @@ void EncodeDecode(
 	int predictionMode, 
 	int codingUnitWidth, 
 	int codingUnitHeight,
-	int qp)
+#if USE_REAL_QUANTIZATION
+	int (*quantTable)[CODING_UNIT_WIDTH],
+	int (*iQuantTable)[CODING_UNIT_WIDTH]
+#else
+	int qp
+#endif
+	)
 {
 	CuBuffer	predictionBuffer;
 	CuIntBuffer residualBufferDWord;
@@ -394,7 +431,12 @@ void EncodeDecode(
 		codingUnitWidth, 
 		codingUnitWidth, 
 		codingUnitHeight, 
-		qp);
+#if USE_REAL_QUANTIZATION
+		quantTable
+#else
+		qp
+#endif
+		);
 
 	/***** DECODE *****/
 	Decode(
@@ -404,7 +446,12 @@ void EncodeDecode(
 		predictionMode,
 		codingUnitWidth,
 		codingUnitHeight,
-		qp);
+#if USE_REAL_QUANTIZATION
+		iQuantTable
+#else
+		qp
+#endif
+		);
 }
 
 void EncodeCu(
@@ -455,6 +502,12 @@ void EncodeCu(
 	int reconUStride = reconBestBuffer->uStride;
 	int reconVStride = reconBestBuffer->vStride;
 
+#if USE_REAL_QUANTIZATION
+	// Quant/IQuant tables
+	int (*quantTable)[CODING_UNIT_WIDTH] = codingUnitStructure->QuantTable;
+	int (*iQuantTable)[CODING_UNIT_WIDTH] = codingUnitStructure->IQuantTable;
+#endif
+
 	// Will contain the reference for the CU
 	// [0] : pixel offset (-1, -1) from CU start
 	// [1-16] : pixels offset from (0, -1) to (15, -1)
@@ -462,6 +515,9 @@ void EncodeCu(
 	unsigned char referenceBuffer[CODING_UNIT_REF_BUFFER_SIZE_Y];
 
 	int predictionModeCursor = 0;
+
+	int predictionModeStart = 0;
+	int predictionModeEnd = PredictionModeCount;
 
 	// Copy the samples into the reference buffer
 	CopyReferenceSamples(
@@ -474,7 +530,7 @@ void EncodeCu(
 		CODING_UNIT_HEIGHT);
 
 	// Prediction Mode Loop
-	for(predictionModeCursor = 0; predictionModeCursor < PredictionModeCount; predictionModeCursor++)
+	for(predictionModeCursor = predictionModeStart; predictionModeCursor < predictionModeEnd/*PredictionModeCount*/; predictionModeCursor++)
 	{
 		int currentPredictionModeCost;
 
@@ -488,7 +544,13 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH, 
 			CODING_UNIT_HEIGHT,
-			qpValue);
+#if USE_REAL_QUANTIZATION
+			quantTable,
+			iQuantTable
+#else
+			qpValue
+#endif
+			);
 
 		/***** COST CALCULATION *****/
 		// Determine the cost of this prediction mode, and update if necessary
@@ -504,7 +566,7 @@ void EncodeCu(
 		// Check new cost with current best cost
 		codingUnit->predictionModeCost[predictionModeCursor] = currentPredictionModeCost;
 		if(codingUnit->predictionModeCost[predictionModeCursor] < codingUnit->predictionModeCost[ codingUnitStructure->bestPredictionModes[cuIndex] ]
-			|| !predictionModeCursor)
+			|| predictionModeCursor == predictionModeStart)
 		{
 			// Update the best prediction mode and copy the transform and recon into the buffers
 			codingUnitStructure->bestPredictionModes[cuIndex] = (PredictionMode_t) predictionModeCursor;
@@ -555,7 +617,13 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			qpValue);
+#if USE_REAL_QUANTIZATION
+			quantTable,
+			iQuantTable
+#else
+			qpValue
+#endif
+			);
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(
@@ -597,7 +665,13 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			qpValue);
+#if USE_REAL_QUANTIZATION
+			quantTable,
+			iQuantTable
+#else
+			qpValue
+#endif
+			);
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(
@@ -640,8 +714,14 @@ void DecodeLoop(
 				cuCursorY,
 				codingUnitStructure->qp);
 
-			printf("Finished Decoding %d/%d CU's!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
+			//printf("Decoding %d/%d CUs!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
+#if DEBUG_QUANT
+			break;
+#endif
 		}
+#if DEBUG_QUANT
+		break;
+#endif
 	}
 }
 
@@ -666,8 +746,14 @@ void EncodeLoop(
 				cuCursorX, 
 				cuCursorY,
 				qpValue);
-			printf("Finished %d/%d CU's!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
+			//printf("Encoding %d/%d CUs!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
+#if DEBUG_QUANT
+			break;
+#endif
 		}
+#if DEBUG_QUANT
+		break;
+#endif
 	}
 
 	// Update the QP value after encoding is finished

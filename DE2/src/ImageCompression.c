@@ -42,16 +42,23 @@
 
 
 // ENCODER
-#define PICTURE_WIDTH			(320)//(1280)
-#define PICTURE_HEIGHT			(240)//(720)
+//#define PICTURE_WIDTH			(320)//(1280)
+//#define PICTURE_HEIGHT		(240)//(720)
+#define PICTURE_WIDTH			(1280)
+#define PICTURE_HEIGHT			(720)
 #define PICTURE_QP				(DEFAULT_QP_VALUE)
-#define INPUT_YUV_FILE			("Z:\\EncodedFiles\\Cats_320x240_420.yuv")//("Z:\\EncodedFiles\\catlarge.yuv")
-#define OUTPUT_RECON_YUV		("Z:\\EncodedFiles\\recon.yuv")//("Z:\\EncodedFiles\\recon.yuv")
-#define OUTPUT_BITSTREAM_FILE	("Z:\\EncodedFiles\\cats_320x240.haaf")//("Z:\\EncodedFiles\\catlarge.haaf")
+//#define INPUT_YUV_FILE			("Z:\\EncodedFiles\\Cats_320x240_420.yuv")//("Z:\\EncodedFiles\\catlarge.yuv")
+//#define OUTPUT_RECON_YUV		("Z:\\EncodedFiles\\recon.yuv")//("Z:\\EncodedFiles\\recon.yuv")
+//#define OUTPUT_BITSTREAM_FILE	("Z:\\EncodedFiles\\cats_320x240.haaf")//("Z:\\EncodedFiles\\catlarge.haaf")
+#define INPUT_YUV_FILE			("Z:\\EncodedFiles\\catlarge.yuv")
+#define OUTPUT_RECON_YUV		("Z:\\EncodedFiles\\recon.yuv")
+#define OUTPUT_BITSTREAM_FILE	("Z:\\EncodedFiles\\catlarge.haaf")
 
 // DECODER
-#define INPUT_BITSTREAM			("Z:\\EncodedFiles\\cats_320x240.haaf")
-#define OUTPUT_YUV				("Z:\\EncodedFiles\\Decoded_cats_320x240.yuv")
+//#define INPUT_BITSTREAM			("Z:\\EncodedFiles\\cats_320x240.haaf")
+//#define OUTPUT_YUV				("Z:\\EncodedFiles\\Decoded_cats_320x240.yuv")
+#define INPUT_BITSTREAM			("Z:\\EncodedFiles\\catlarge.haaf")
+#define OUTPUT_YUV				("Z:\\EncodedFiles\\Decoded_catlarge_1280x720_NewCost_approximate.yuv")
 
 
 int main(int argc, char* argv[])

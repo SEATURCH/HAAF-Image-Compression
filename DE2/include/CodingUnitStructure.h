@@ -72,13 +72,6 @@ typedef struct CodingUnitStructure_s
 	// Recon Picture Buffers
 	BufferDescriptor_t reconBestBuffer;
 
-#if USE_REAL_QUANTIZATION
-	// Quantization Coefficients
-	int QuantTable[2][CODING_UNIT_WIDTH];
-	int IQuantTable[2][CODING_UNIT_WIDTH];
-#endif
-
-
 } CodingUnitStructure_t;
 
 /*** FUNCTION DEFINITIONS ***/

@@ -152,12 +152,6 @@ void DecodeCu(
 
 	// Units are in bytes
 	int transformWidth = CODING_UNIT_WIDTH * transformBestBuffer->sampleSize;
-	
-#if USE_REAL_QUANTIZATION
-	// Quant/IQuant tables
-	int (*quantTable)[CODING_UNIT_WIDTH] = codingUnitStructure->QuantTable;
-	int (*iQuantTable)[CODING_UNIT_WIDTH] = codingUnitStructure->IQuantTable;
-#endif
 
 	// Will contain the reference for the CU
 	// [0] : pixel offset (-1, -1) from CU start
@@ -193,12 +187,7 @@ void DecodeCu(
 		predictionMode, 
 		CODING_UNIT_WIDTH, 
 		CODING_UNIT_HEIGHT,
-#if USE_REAL_QUANTIZATION
-			iQuantTable
-#else
-			qpValue
-#endif
-		);
+		qpValue);
 
 	// Copy recon buffer into recon best buffer
 	CopyBlockByte(
@@ -238,12 +227,7 @@ void DecodeCu(
 			predictionMode, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-#if USE_REAL_QUANTIZATION
-			iQuantTable
-#else
-			qpValue
-#endif
-			);
+			qpValue);
 	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
@@ -282,12 +266,7 @@ void DecodeCu(
 			predictionMode, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-#if USE_REAL_QUANTIZATION
-			iQuantTable
-#else
-			qpValue
-#endif
-			);
+			qpValue);
 	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
@@ -308,12 +287,7 @@ void Decode(
 	int predictionMode, 
 	int codingUnitWidth,
 	int codingUnitHeight,
-#if USE_REAL_QUANTIZATION
-	int (*iQuantTable)[CODING_UNIT_WIDTH]
-#else
-	int qp
-#endif
-	)
+	int qp)
 {
 	CuIntBuffer invQuantizeBuffer;
 	CuIntBuffer invTransformBufferDWord;
@@ -343,12 +317,7 @@ void Decode(
 		codingUnitWidth, 
 		codingUnitWidth, 
 		codingUnitHeight, 
-#if USE_REAL_QUANTIZATION
-		iQuantTable
-#else
-		qp
-#endif
-		);
+		qp);
 
 	// Inverse Transform
 	xITrMxN(
@@ -387,12 +356,7 @@ void EncodeDecode(
 	int predictionMode, 
 	int codingUnitWidth, 
 	int codingUnitHeight,
-#if USE_REAL_QUANTIZATION
-	int (*quantTable)[CODING_UNIT_WIDTH],
-	int (*iQuantTable)[CODING_UNIT_WIDTH]
-#else
 	int qp
-#endif
 	)
 {
 	CuBuffer	predictionBuffer;
@@ -431,12 +395,7 @@ void EncodeDecode(
 		codingUnitWidth, 
 		codingUnitWidth, 
 		codingUnitHeight, 
-#if USE_REAL_QUANTIZATION
-		quantTable
-#else
-		qp
-#endif
-		);
+		qp);
 
 	/***** DECODE *****/
 	Decode(
@@ -446,12 +405,7 @@ void EncodeDecode(
 		predictionMode,
 		codingUnitWidth,
 		codingUnitHeight,
-#if USE_REAL_QUANTIZATION
-		iQuantTable
-#else
-		qp
-#endif
-		);
+		qp);
 }
 
 void EncodeCu(
@@ -470,7 +424,6 @@ void EncodeCu(
 
 	// pointer to the input Picture at the CU's location
 	CodingUnit_t *codingUnit = &codingUnitStructure->codingUnits[cuIndex];
-
 
 	// Unsigned Char Blocks
 	BufferDescriptor_t *inputPicture = codingUnitStructure->inputPicture;
@@ -501,12 +454,6 @@ void EncodeCu(
 	int reconYStride = reconBestBuffer->yStride;
 	int reconUStride = reconBestBuffer->uStride;
 	int reconVStride = reconBestBuffer->vStride;
-
-#if USE_REAL_QUANTIZATION
-	// Quant/IQuant tables
-	int (*quantTable)[CODING_UNIT_WIDTH] = codingUnitStructure->QuantTable;
-	int (*iQuantTable)[CODING_UNIT_WIDTH] = codingUnitStructure->IQuantTable;
-#endif
 
 	// Will contain the reference for the CU
 	// [0] : pixel offset (-1, -1) from CU start
@@ -544,13 +491,7 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH, 
 			CODING_UNIT_HEIGHT,
-#if USE_REAL_QUANTIZATION
-			quantTable,
-			iQuantTable
-#else
-			qpValue
-#endif
-			);
+			qpValue);
 
 		/***** COST CALCULATION *****/
 		// Determine the cost of this prediction mode, and update if necessary
@@ -617,13 +558,7 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-#if USE_REAL_QUANTIZATION
-			quantTable,
-			iQuantTable
-#else
-			qpValue
-#endif
-			);
+			qpValue);
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(
@@ -665,13 +600,7 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-#if USE_REAL_QUANTIZATION
-			quantTable,
-			iQuantTable
-#else
-			qpValue
-#endif
-			);
+			qpValue);
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(
@@ -714,14 +643,8 @@ void DecodeLoop(
 				cuCursorY,
 				codingUnitStructure->qp);
 
-			//printf("Decoding %d/%d CUs!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
-#if DEBUG_QUANT
-			break;
-#endif
+			printf("Decoding %d/%d CUs!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
 		}
-#if DEBUG_QUANT
-		break;
-#endif
 	}
 }
 
@@ -746,14 +669,8 @@ void EncodeLoop(
 				cuCursorX, 
 				cuCursorY,
 				qpValue);
-			//printf("Encoding %d/%d CUs!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
-#if DEBUG_QUANT
-			break;
-#endif
+			printf("Encoding %d/%d CUs!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
 		}
-#if DEBUG_QUANT
-		break;
-#endif
 	}
 
 	// Update the QP value after encoding is finished
@@ -779,8 +696,8 @@ void GenerateBitstream(
 
 	EncodeBitstream(
 		outputBitstream,
-		(unsigned char *)saturatedCoeffs,//(unsigned char *) codingUnitStructure->transformBestBuffer.fullPicturePointer,
-		saturatedCoeffsSize,//codingUnitStructure->transformBestBuffer.yuvSize,
+		(unsigned char *)saturatedCoeffs,
+		saturatedCoeffsSize,
 		codingUnitStructure->bestPredictionModes,
 		numCUs,
 		codingUnitStructure->widthPicture,

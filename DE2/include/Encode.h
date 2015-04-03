@@ -29,12 +29,7 @@ void Decode(
 	int predictionMode, 
 	int codingUnitWidth,
 	int codingUnitHeight,
-#if USE_REAL_QUANTIZATION
-	int (*iQuantTable)[CODING_UNIT_WIDTH]
-#else
-	int qp
-#endif
-	);
+	int qp);
 
 void EncodeDecode(
 	// OUT
@@ -47,13 +42,7 @@ void EncodeDecode(
 	int predictionMode, 
 	int codingUnitWidth, 
 	int codingUnitHeight,
-#if USE_REAL_QUANTIZATION
-	int (*quantTable)[CODING_UNIT_WIDTH],
-	int (*iQuantTable)[CODING_UNIT_WIDTH]
-#else
-	int qp
-#endif
-	);
+	int qp);
 
 void EncodeCu(
 	CodingUnitStructure_t *codingUnitStructure, 

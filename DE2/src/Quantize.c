@@ -113,57 +113,32 @@ void Quantize(
 	int *coeff, 
 	int coeffStride, 
 	int width, 
-	int height, 
-#if USE_REAL_QUANTIZATION
-	int (*quantTable)[CODING_UNIT_WIDTH]
-#else
+	int height,
 	int qp
-#endif
 	)
 {
 	int puCursorX;
 	int puCursorY;
-	
-#if !USE_REAL_QUANTIZATION
+
 	// Lossless Compression
 	if(qp == 0)
 		return;
 
-	if(qp < 0 || qp > 50000)
+	if(qp < 0 || qp > 51)
 	{
 		printf("INVALID QP!!!!!\n");
 		return;
 	}
-#endif
 
-#if DEBUG_QUANT
-	printf("Quantizing:\n");
-#endif
 	// Set everything to average
 	for(puCursorY = 0; puCursorY < height; puCursorY++)
 	{
 		for(puCursorX = 0; puCursorX < width; puCursorX++)
 		{
-#if USE_REAL_QUANTIZATION
-			int coeffVal = abs(coeff[(puCursorY * coeffStride) + puCursorX]) << 2;
-			char coeffSign = (coeffVal < 0) ? (-1) : (1);
-			
-			coeff[(puCursorY * coeffStride) + puCursorX] = ((coeffVal * quantTable[puCursorY & 0x1][puCursorX]) + QBITS_ROUND) >> (QBITS);
-			coeff[(puCursorY * coeffStride) + puCursorX] *= coeffSign;
-
-#else
 			// The '1' is the offset from the (-1, -1) start of referenceBuffer
-			coeff[(puCursorY * coeffStride) + puCursorX] /= QuantizationTable[puCursorY][puCursorX];//qp;
-#endif
+			coeff[(puCursorY * coeffStride) + puCursorX] /= QuantizationTable[puCursorY][puCursorX];
 
-#if DEBUG_QUANT
-			printf("[%d][%d]: CoeffVal: %d, QuantCoeffVal: %d, quantTable: %d\n", puCursorX, puCursorY, coeffVal, coeff[(puCursorY * coeffStride) + puCursorX], quantTable[puCursorY & 0x1][puCursorX]);
-#endif
 		}
-#if DEBUG_QUANT
-		if(puCursorY == 3)
-			break;
-#endif
 	}
 }
 
@@ -173,57 +148,30 @@ void InverseQuantize(
 	int coeffStride, 
 	int width, 
 	int height, 
-#if USE_REAL_QUANTIZATION
-	int (*iQuantTable)[CODING_UNIT_WIDTH]
-#else
 	int qp
-#endif
 	)
 {
 	int puCursorX;
 	int puCursorY;
 	
-#if !USE_REAL_QUANTIZATION
 	// Lossless Compression
 	if(qp == 0)
 		return;
 
-	if(qp < 0 || qp > 50000)
+	if(qp < 0 || qp > 51)
 	{
 		printf("INVALID QP!!!!!\n");
 		return;
 	}
-#endif
-
-#if DEBUG_QUANT
-	printf("Inverse Quantize!\n");
-#endif
 	
 	// Set everything to average
 	for(puCursorY = 0; puCursorY < height; puCursorY++)
 	{
 		for(puCursorX = 0; puCursorX < width; puCursorX++)
 		{
-
-#if DEBUG_QUANT
-			printf("[%d][%d]: QuantCoeffVal: %d, ", puCursorX, puCursorY, coeff[(puCursorY * coeffStride) + puCursorX]);
-#endif
-
-#if USE_REAL_QUANTIZATION
-			coeff[(puCursorY * coeffStride) + puCursorX] *= iQuantTable[puCursorY & 0x1][puCursorX];
-#else
 			// The '1' is the offset from the (-1, -1) start of referenceBuffer
-			coeff[(puCursorY * coeffStride) + puCursorX] *= QuantizationTable[puCursorY][puCursorX];//qp;
-#endif
-
-#if DEBUG_QUANT
-			printf("InvQuantCoeffVal: %d, IQuantTable: %d\n", coeff[(puCursorY * coeffStride) + puCursorX], iQuantTable[puCursorY & 0x1][puCursorX]);
-#endif
+			coeff[(puCursorY * coeffStride) + puCursorX] *= QuantizationTable[puCursorY][puCursorX];
 		}
-#if DEBUG_QUANT
-		if(puCursorY == 3)
-			break;
-#endif
 	}
 }
 

@@ -6,23 +6,23 @@
 RPiGPIOPin IN[] = {
 	RPI_BPLUS_GPIO_J8_03,
 	RPI_BPLUS_GPIO_J8_05,
-RPI_BPLUS_GPIO_J8_07,
-RPI_BPLUS_GPIO_J8_29,
-RPI_BPLUS_GPIO_J8_31,
-RPI_BPLUS_GPIO_J8_26,
-RPI_BPLUS_GPIO_J8_24,
-RPI_BPLUS_GPIO_J8_21
+	RPI_BPLUS_GPIO_J8_07,
+	RPI_BPLUS_GPIO_J8_29,
+	RPI_BPLUS_GPIO_J8_31,
+	RPI_BPLUS_GPIO_J8_26,
+	RPI_BPLUS_GPIO_J8_24,
+	RPI_BPLUS_GPIO_J8_21
 };
 
 RPiGPIOPin OUT[] = {
-RPI_BPLUS_GPIO_J8_19,
-RPI_BPLUS_GPIO_J8_23,
-RPI_BPLUS_GPIO_J8_32,
-RPI_BPLUS_GPIO_J8_33,
-RPI_BPLUS_GPIO_J8_08,
-RPI_BPLUS_GPIO_J8_10,
-RPI_BPLUS_GPIO_J8_36,
-RPI_BPLUS_GPIO_J8_11
+	RPI_BPLUS_GPIO_J8_19,
+	RPI_BPLUS_GPIO_J8_23,
+	RPI_BPLUS_GPIO_J8_32,
+	RPI_BPLUS_GPIO_J8_33,
+	RPI_BPLUS_GPIO_J8_08,
+	RPI_BPLUS_GPIO_J8_10,
+	RPI_BPLUS_GPIO_J8_36,
+	RPI_BPLUS_GPIO_J8_11
 };
 
 #define READ RPI_BPLUS_GPIO_J8_40
@@ -86,11 +86,11 @@ void Send(unsigned char* send, int image_size) {
 		}
 }
 
-void writeToYuv(unsigned char* received, int size)
+void writeToYuv(unsigned char* received, int image_size)
 {
 	FILE *fp;
-	fp = fopen("/home/pi/Desktop/car.yuv", "w+");
-	fwrite(received, 1, size, fp);
+	fp = fopen("/home/pi/Desktop/sprint2_output.yuv", "w+");
+	fwrite(received, 1, image_size, fp);
 	fclose(fp);
 }
 
@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 
 	FILE *fp;
 	fp = fopen(name, "rb");
-	fread(sendBuffer, 1, size, fp);
+	fread(sendBuffer, 1, image_size, fp);
 	fclose(fp);
 
 	if (!bcm2835_init()){

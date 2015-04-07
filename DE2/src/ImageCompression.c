@@ -75,13 +75,26 @@ int main(int argc, char* argv[])
 		int pictureHeight = PICTURE_HEIGHT;
 		int requestedQP = PICTURE_QP;
 
+		// Error check inputs
+		if(requestedQP < 0 || requestedQP > 51) {
+			printf("Invalid QP (%d), please choose a valid QP between 0-51", requestedQP);
+			return 0;
+		}
+		if(((pictureWidth % 16) != 0) || ((pictureHeight % 16) != 0)) {
+			printf("Width/Height not divisible by 16! Exiting...");
+			return 0;
+		}
+		
+		printf("HAAF IMAGE ENCODER V1.0\n");
+
 		/*** CONSTRUCTION ***/
 
 		// Coding Unit Structure Initializes the Coding Unit's and Input Pictures
 		CodingUnitStructureConstructor(
 			&codingUnitStructure, 
 			pictureWidth, 
-			pictureHeight);
+			pictureHeight,
+			requestedQP);
 
 		BufferDescriptorConstructor(
 			&inputPicture,
@@ -112,23 +125,26 @@ int main(int argc, char* argv[])
 			DEFAULT_PICTURE_WIDTH, 
 			DEFAULT_PICTURE_HEIGHT);
 	#elif VS_BUILD
+		printf("Opening image from file: \'%s\'...\t", INPUT_YUV_FILE);
 		OpenYUVFileIntoInputPicture(
 			&inputPicture, 
 			INPUT_YUV_FILE, 
 			pictureWidth, 
 			pictureHeight);
+		printf("Done!\n");
 	#endif
+
+		printf("Input Picture: %dx%d, qp: %d\n", pictureWidth, pictureHeight, requestedQP);
 
 		SetInputPicture(
 			&codingUnitStructure, 
 			&inputPicture);
 
-		printf("Encoding\n");
+		printf("Encoding Bitstream...\t");
 
 		// Encode the image
 		EncodeLoop(
-			&codingUnitStructure, 
-			requestedQP);
+			&codingUnitStructure);
 
 		// Generate the bitstream
 		GenerateBitstream(
@@ -140,7 +156,7 @@ int main(int argc, char* argv[])
 			&outputBitstream,
 			OUTPUT_BITSTREAM_FILE);
 
-		printf("Encode Done\n");
+		printf("Done!\n\n\n");
 
 #if ENABLE_ENCODER_RECON_OUT
 		// Output the picture
@@ -178,6 +194,8 @@ int main(int argc, char* argv[])
 
 		const char *inputFile = INPUT_BITSTREAM;
 
+		printf("HAAF IMAGE DECODER V1.0\n");
+
 		/*** CONSTRUCTION ***/
 		OpenBitstreamFromFile(
 			inputFile,
@@ -189,18 +207,21 @@ int main(int argc, char* argv[])
 		CodingUnitStructureConstructor(
 			&codingUnitStructure,
 			pictureWidth,
-			pictureHeight);
+			pictureHeight,
+			qp);
 
 		/*** MAIN ALGORITHM ***/
+		
+		printf("Output Picture: %dx%d, qp: %d\n", pictureWidth, pictureHeight, qp);
 
 		// Decode bitstream into CodingUnitStructure
+		printf("Decoding Bitstream....\t");
 		DecodeBitstream(
 			&codingUnitStructure, 
 			&inputBitstream);
 
-		codingUnitStructure.qp = qp;
-
 		DecodeLoop(&codingUnitStructure);
+		printf("Done!\n");
 
 	// Output the picture
 #if N2_BUILD
@@ -209,9 +230,11 @@ int main(int argc, char* argv[])
 		Send(sendBuffer);
 		printf("Send Done\n");
 #elif VS_BUILD
+		printf("Writing to file: \'%s\'...\t", OUTPUT_YUV);
 		SaveYUVToFile(
 			OUTPUT_YUV, 
 			&(codingUnitStructure.reconBestBuffer));
+		printf("Done!\n\n\n");
 #endif
 
 

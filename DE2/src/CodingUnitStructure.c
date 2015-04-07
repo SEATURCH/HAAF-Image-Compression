@@ -59,7 +59,8 @@ void BufferDescriptorDeconstructor(BufferDescriptor_t *pictureBuffer)
 void CodingUnitStructureConstructor(
 	CodingUnitStructure_t *codingUnitStructure, 
 	int pictureWidth, 
-	int pictureHeight)
+	int pictureHeight,
+	int qp)
 {
 	int xCuIndex = 0;
 	int yCuIndex = 0;
@@ -71,12 +72,6 @@ void CodingUnitStructureConstructor(
 	codingUnitStructure->heightPicture = pictureHeight;
 
 	// Initialize Picture Buffers
-	// Normal Dims
-	//BufferDescriptorConstructor(
-	//	&codingUnitStructure->inputPicture,
-	//	codingUnitStructure->widthPicture,
-	//	codingUnitStructure->heightPicture,
-	//	sizeof(unsigned char));
 	BufferDescriptorConstructor(
 		&codingUnitStructure->transformBestBuffer,
 		codingUnitStructure->widthPicture,
@@ -124,56 +119,73 @@ void CodingUnitStructureConstructor(
 
 		}
 	}
-	//InitConvertToBit();
-	
-#if USE_REAL_QUANTIZATION
-	// Initialize Quantization Tables
+
+	// Initialize Quantization Tables based off qp
 	{
+		int BandPassFilter[CODING_UNIT_WIDTH + CODING_UNIT_HEIGHT - 1];
 
-		// Quantization Multipliers
-		int QPT0 = QPP[QP_BASE][0] / QP_MULT;
-		int QPT1 = QPP[QP_BASE][1] / QP_MULT;
-		int QPT2 = QPP[QP_BASE][2] / QP_MULT;
+		int yCursor = 0;
+		int xCursor = 0;
 
-		// Inverse Quantization Multipliers
-		int IQPT0 = IQPP[QP_BASE][0] * QP_MULT;
-		int IQPT1 = IQPP[QP_BASE][1] * QP_MULT;
-		int IQPT2 = IQPP[QP_BASE][2] * QP_MULT;
+		// Initialize Band Pass Filter
+		BandPassFilter[0]  = GetQuantizationParam(AzA_MAX, AzA_MIN, QP_MAX, qp);
+		BandPassFilter[1]  = GetQuantizationParam(BzB_MAX, BzB_MIN, QP_MAX, qp);
+		BandPassFilter[2]  = GetQuantizationParam(CzC_MAX, CzC_MIN, QP_MAX, qp);
+		BandPassFilter[3]  = GetQuantizationParam(DzD_MAX, DzD_MIN, QP_MAX, qp);
+		BandPassFilter[4]  = GetQuantizationParam(EzE_MAX, EzE_MIN, QP_MAX, qp);
+		BandPassFilter[5]  = GetQuantizationParam(FzF_MAX, FzF_MIN, QP_MAX, qp);
+		BandPassFilter[6]  = GetQuantizationParam(GzG_MAX, GzG_MIN, QP_MAX, qp);
+		BandPassFilter[7]  = GetQuantizationParam(HzH_MAX, HzH_MIN, QP_MAX, qp);
+		BandPassFilter[8]  = GetQuantizationParam(IzI_MAX, IzI_MIN, QP_MAX, qp);
+		BandPassFilter[9]  = GetQuantizationParam(JzJ_MAX, JzJ_MIN, QP_MAX, qp);
+		BandPassFilter[10] = GetQuantizationParam(KzK_MAX, KzK_MIN, QP_MAX, qp);
+		BandPassFilter[11] = GetQuantizationParam(LzL_MAX, LzL_MIN, QP_MAX, qp);
+		BandPassFilter[12] = GetQuantizationParam(MzM_MAX, MzM_MIN, QP_MAX, qp);
+		BandPassFilter[13] = GetQuantizationParam(NzN_MAX, NzN_MIN, QP_MAX, qp);
+		BandPassFilter[14] = GetQuantizationParam(OzO_MAX, OzO_MIN, QP_MAX, qp);
+		BandPassFilter[15] = GetQuantizationParam(PzP_MAX, PzP_MIN, QP_MAX, qp);
+		BandPassFilter[16] = GetQuantizationParam(QzQ_MAX, QzQ_MIN, QP_MAX, qp);
+		BandPassFilter[17] = GetQuantizationParam(RzR_MAX, RzR_MIN, QP_MAX, qp);
+		BandPassFilter[18] = GetQuantizationParam(SzS_MAX, SzS_MIN, QP_MAX, qp);
+		BandPassFilter[19] = GetQuantizationParam(TzT_MAX, TzT_MIN, QP_MAX, qp);
+		BandPassFilter[20] = GetQuantizationParam(UzU_MAX, UzU_MIN, QP_MAX, qp);
+		BandPassFilter[21] = GetQuantizationParam(VzV_MAX, VzV_MIN, QP_MAX, qp);
+		BandPassFilter[22] = GetQuantizationParam(WzW_MAX, WzW_MIN, QP_MAX, qp);
+		BandPassFilter[23] = GetQuantizationParam(XzX_MAX, XzX_MIN, QP_MAX, qp);
+		BandPassFilter[24] = GetQuantizationParam(YzY_MAX, YzY_MIN, QP_MAX, qp);
+		BandPassFilter[25] = GetQuantizationParam(ZzZ_MAX, ZzZ_MIN, QP_MAX, qp);
+		BandPassFilter[26] = GetQuantizationParam(ZzZ_MAX, ZzZ_MIN, QP_MAX, qp);
+		BandPassFilter[27] = GetQuantizationParam(ZzZ_MAX, ZzZ_MIN, QP_MAX, qp);
+		BandPassFilter[28] = GetQuantizationParam(ZzZ_MAX, ZzZ_MIN, QP_MAX, qp);
+		BandPassFilter[29] = GetQuantizationParam(ZzZ_MAX, ZzZ_MIN, QP_MAX, qp);
+		BandPassFilter[30] = GetQuantizationParam(ZzZ_MAX, ZzZ_MIN, QP_MAX, qp);
 
-		int quantCursor = 0;
-
-		
-		printf("QPT[0]: %d\nQPT[1]: %d\nQPT[2]: %d\n\n", QPT0, QPT1, QPT2);
-		printf("IQPT[0]: %d\nIQPT[1]: %d\nIQPT[2]: %d\n\n", IQPT0, IQPT1, IQPT2);
-		printf("QBITS: %d\nQBITS_ROUND: %d\n\n", QBITS, QBITS_ROUND);
-
-		// 0th row, even vals
-		for(quantCursor = 0; quantCursor < CODING_UNIT_WIDTH; quantCursor += 2)
+		// Luma Filter
+		for(yCursor = 0; yCursor < CODING_UNIT_HEIGHT; yCursor++)
 		{
-			codingUnitStructure->QuantTable[0][quantCursor] = QPT0;
-			codingUnitStructure->IQuantTable[0][quantCursor] = IQPT0;
-
-			codingUnitStructure->QuantTable[1][quantCursor] = QPT2;
-			codingUnitStructure->IQuantTable[1][quantCursor] = IQPT2;
+			for(xCursor = 0; xCursor < CODING_UNIT_WIDTH; xCursor++)
+			{
+				codingUnitStructure->lumaQuantizationBuffer[(yCursor * CODING_UNIT_WIDTH) + xCursor] = BandPassFilter[yCursor + xCursor];
+			}
 		}
 
-		for(quantCursor = 1; quantCursor < CODING_UNIT_WIDTH; quantCursor += 2)
+		// Chroma Filter
+		for(yCursor = 0; yCursor < (CODING_UNIT_HEIGHT >> 1); yCursor++)
 		{
-			codingUnitStructure->QuantTable[0][quantCursor] = QPT2;
-			codingUnitStructure->IQuantTable[0][quantCursor] = IQPT2;
-
-			codingUnitStructure->QuantTable[1][quantCursor] = QPT1;
-			codingUnitStructure->IQuantTable[1][quantCursor] = IQPT1;
+			for(xCursor = 0; xCursor < (CODING_UNIT_WIDTH >> 1); xCursor++)
+			{
+				codingUnitStructure->chromaQuantizationBuffer[(yCursor * (CODING_UNIT_WIDTH >> 1)) + xCursor] = BandPassFilter[(yCursor << 1) + (xCursor << 1)];
+			}
 		}
+
+		codingUnitStructure->qp = qp;
 
 	}
-#endif
 	
 }
 
 void CodingUnitStructureDeconstructor(CodingUnitStructure_t *codingUnitStructure)
 {
-	//BufferDescriptorDeconstructor(&codingUnitStructure->inputPicture);
 	BufferDescriptorDeconstructor(&codingUnitStructure->transformBestBuffer);
 	BufferDescriptorDeconstructor(&codingUnitStructure->reconBestBuffer);
 	

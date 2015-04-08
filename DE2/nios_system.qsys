@@ -213,45 +213,6 @@
          type = "String";
       }
    }
-   element Rasp_Output.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "4096";
-         type = "String";
-      }
-   }
-   element Rasp_Input.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "4128";
-         type = "String";
-      }
-   }
-   element push.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "8192";
-         type = "String";
-      }
-   }
    element Ready_Send.s1
    {
       datum _lockedAddress
@@ -262,32 +223,6 @@
       datum baseAddress
       {
          value = "4192";
-         type = "String";
-      }
-   }
-   element LEDs.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "10288";
-         type = "String";
-      }
-   }
-   element sdram.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "16777216";
          type = "String";
       }
    }
@@ -304,7 +239,7 @@
          type = "String";
       }
    }
-   element Ready_Read.s1
+   element sdram.s1
    {
       datum _lockedAddress
       {
@@ -313,7 +248,7 @@
       }
       datum baseAddress
       {
-         value = "4224";
+         value = "16777216";
          type = "String";
       }
    }
@@ -330,7 +265,7 @@
          type = "String";
       }
    }
-   element Send_Mode.s1
+   element Rasp_Output.s1
    {
       datum _lockedAddress
       {
@@ -339,7 +274,46 @@
       }
       datum baseAddress
       {
-         value = "4160";
+         value = "4096";
+         type = "String";
+      }
+   }
+   element LEDs.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "10288";
+         type = "String";
+      }
+   }
+   element Ready_Read.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "4224";
+         type = "String";
+      }
+   }
+   element Rasp_Input.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "4128";
          type = "String";
       }
    }
@@ -353,6 +327,32 @@
       datum baseAddress
       {
          value = "10272";
+         type = "String";
+      }
+   }
+   element push.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "8192";
+         type = "String";
+      }
+   }
+   element Send_Mode.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "4160";
          type = "String";
       }
    }
@@ -395,7 +395,7 @@
  <parameter name="projectName" value="Base.qpf" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1428451261812" />
+ <parameter name="timeStamp" value="1428457050067" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk" internal="clk_0.clk_in" type="clock" dir="end" />

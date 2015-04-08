@@ -5,15 +5,18 @@
 
 
 #if N2_BUILD
+// Assume 16x16 prediction
 void PredictionVHDL(
 	// IN
-	unsigned char *referenceBuffer, 
-	int size) {
+	unsigned char *referenceBuffer)
+{
 
 	int ho[CODING_UNIT_WIDTH];
 	int ve[CODING_UNIT_HEIGHT];
 	int tl = referenceBuffer[0];
 	int refCursor = 0;
+
+	const int size = CODING_UNIT_WIDTH;
 
 	for (refCursor=0; refCursor<size; refCursor++) {
 		ho[refCursor] = (int) referenceBuffer[1+refCursor];
@@ -36,80 +39,70 @@ void PredictionVHDL(
 	//Writing 'go' bit
 	IOWR_32DIRECT(BASE, 4*GO_BIT_BASE_ADDRESS,1);
 }
+#endif
 
-void PredictionModeDCRead (
-	// OUT
-	unsigned char *dst, 
-	int dstStride){
+
+void PredictionReadBuffer(
+		unsigned char *dst,
+		int dstStride,
+		int base_address)
+{
+#if N2_BUILD
 	int puCursorX;
 	int puCursorY;
 	int buffer[4*CODING_UNIT_WIDTH];
 	int bufferCursor;
 
-	while(IORD_32DIRECT(BASE, 4*DONE_BIT_BASE_ADDRESS) == 0);
 	for(bufferCursor=0;bufferCursor<4*CODING_UNIT_WIDTH;bufferCursor++) {
-	  buffer[bufferCursor] = IORD_32DIRECT(BASE, 4*(DC_BASE_ADDRESS+bufferCursor*4));
+	  buffer[bufferCursor] = IORD_32DIRECT(BASE, 4*(base_address+bufferCursor*4));
 	  dst[4*bufferCursor] = (unsigned char) buffer[bufferCursor] & 0x000000FF;
 	  dst[1+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x0000FF00) >> 8;
 	  dst[2+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x00FF000) >> 16;
 	  dst[3+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0xFF000000) >>24;
 	}
+#endif
+}
+
+void PredictionModeDCRead (
+	// OUT
+	unsigned char *dst, 
+	int dstStride,
+	unsigned char *referenceBuffer,
+	int size)
+{
+	PredictionReadBuffer(dst, dstStride, DC_BASE_ADDRESS);
 }
 
 void PredictionModeVerticalRead (
 	// OUT
 	unsigned char *dst, 
-	int dstStride){
-	int puCursorX;
-	int puCursorY;
-	int buffer[4*CODING_UNIT_WIDTH];
-	int bufferCursor;
-
-	for(bufferCursor=0;bufferCursor<4*CODING_UNIT_WIDTH;bufferCursor++) {
-	  buffer[bufferCursor] = IORD_32DIRECT(BASE, 4*(VERTICAL_BASE_ADDRESS+bufferCursor*4));
-	  dst[4*bufferCursor] = (unsigned char) buffer[bufferCursor] & 0x000000FF;
-	  dst[1+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x0000FF00) >> 8;
-	  dst[2+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x00FF000) >> 16;
-	  dst[3+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0xFF000000) >>24;
-	}
+	int dstStride,
+	unsigned char *referenceBuffer,
+	int size)
+{
+	PredictionReadBuffer(dst, dstStride, VERTICAL_BASE_ADDRESS);
 }
 
 void PredictionModeHorizontalRead (
 	// OUT
 	unsigned char *dst, 
-	int dstStride){
-	int puCursorX;
-	int puCursorY;
-	int buffer[4*CODING_UNIT_WIDTH];
-	int bufferCursor;
-
-	for(bufferCursor=0;bufferCursor<4*CODING_UNIT_WIDTH;bufferCursor++) {
-	  buffer[bufferCursor] = IORD_32DIRECT(BASE, 4*(HORIZONTAL_BASE_ADDRESS+bufferCursor*4));
-	  dst[4*bufferCursor] = (unsigned char) buffer[bufferCursor] & 0x000000FF;
-	  dst[1+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x0000FF00) >> 8;
-	  dst[2+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x00FF000) >> 16;
-	  dst[3+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0xFF000000) >>24;
-	}
+	int dstStride,
+	unsigned char *referenceBuffer,
+	int size)
+{
+	PredictionReadBuffer(dst, dstStride, HORIZONTAL_BASE_ADDRESS);
 }
 
 void PredictionModePlanarRead (
 	// OUT
 	unsigned char *dst, 
-	int dstStride){
-	int puCursorX;
-	int puCursorY;
-	int buffer[4*CODING_UNIT_WIDTH];
-	int bufferCursor;
-
-	for(bufferCursor=0;bufferCursor<4*CODING_UNIT_WIDTH;bufferCursor++) {
-	  buffer[bufferCursor] = IORD_32DIRECT(BASE, 4*(PLANAR_BASE_ADDRESS+bufferCursor*4));
-	  dst[4*bufferCursor] = (unsigned char) buffer[bufferCursor] & 0x000000FF;
-	  dst[1+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x0000FF00) >> 8;
-	  dst[2+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x00FF000) >> 16;
-	  dst[3+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0xFF000000) >>24;
-	}
+	int dstStride,
+	unsigned char *referenceBuffer,
+	int size)
+{
+	PredictionReadBuffer(dst, dstStride, PLANAR_BASE_ADDRESS);
 }
-#endif
+
 
 // Creates an Average of the reference and assigns it to every sample in dst
 // - Based off H264 16x16 DC prediction mode

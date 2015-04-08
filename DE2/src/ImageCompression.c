@@ -163,10 +163,10 @@ int main(int argc, char* argv[])
 #if ENABLE_ENCODER_RECON_OUT
 		// Output the picture
 	#if N2_BUILD
-		OpenReconBestIntoSerialYUV(&codingUnitStructure.reconBestBuffer, sendBuffer, DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
-		printf("Sending\n");
-		Send(sendBuffer);
-		printf("Send Done\n");
+		//OpenReconBestIntoSerialYUV(&codingUnitStructure.reconBestBuffer, sendBuffer, DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
+		//printf("Sending\n");
+		//Send(sendBuffer);
+		//printf("Send Done\n");
 	#elif VS_BUILD
 		SaveYUVToFile(
 			OUTPUT_RECON_YUV, 
@@ -217,10 +217,10 @@ int main(int argc, char* argv[])
 
 	// Output the picture
 #if N2_BUILD
-		OpenReconBestIntoSerialYUV(&codingUnitStructure.reconBestBuffer, sendBuffer, DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
-		printf("Sending\n");
-		Send(sendBuffer);
-		printf("Send Done\n");
+		//OpenReconBestIntoSerialYUV(&codingUnitStructure.reconBestBuffer, sendBuffer, DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
+		//printf("Sending\n");
+		//Send(sendBuffer);
+		//printf("Send Done\n");
 #elif VS_BUILD
 		printf("Writing to file: \'%s\'...\t", yuvFile);
 		SaveYUVToFile(

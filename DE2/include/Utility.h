@@ -6,7 +6,8 @@
 #include "string.h"
 
 // Specify Visual Studio build by checking existance of VS version
-#define VS_BUILD	_MSC_VER
+#define PI_BUILD	(__GNUC__)
+#define VS_BUILD	(_MSC_VER || PI_BUILD)
 #define N2_BUILD	!VS_BUILD
 
 /*** DEFINES ***/

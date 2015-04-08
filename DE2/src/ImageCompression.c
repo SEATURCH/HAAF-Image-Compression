@@ -17,7 +17,9 @@ typedef enum ProcessType {
 	INVALID,
 	ENCODE_PICTURE,
 	DECODE_PICTURE,
-	ENCODE_DECODE_PICTURE,
+#if PI_BUILD
+	PI_DE2_ENCODE_PICTURE,
+#endif
 };
 
 int main(int argc, char* argv[])
@@ -40,6 +42,9 @@ int main(int argc, char* argv[])
 	// Decoder Arguments:
 	// EncoderDecoder.exe inputBitstreamFile outputYUVFile
 #define NUM_DEC_ARGS	3
+	// Pi-DE2 Arguments:
+	// EncoderDecoder.exe outputHAAFFile
+#define NUM_PI_ARGS		2
 
 	if(argc == NUM_ENC_ARGS) 
 	{
@@ -56,6 +61,13 @@ int main(int argc, char* argv[])
 		bitstreamFile = argv[1];
 		yuvFile = argv[2];
 	}
+#if PI_BUILD
+	else if(argc == NUM_PI_ARGS)
+	{
+		ProcessingType = PI_DE2_ENCODE_PICTURE;
+		bitstreamFile = argv[1];
+	}
+#endif
 	else 
 	{
 		printf("Unknown number of arguments...\n");
@@ -72,8 +84,14 @@ int main(int argc, char* argv[])
 	qp = 15;
 #endif
 
-
+#if PI_BUILD
+	if(ProcessingType == PI_DE2_ENCODE_PICTURE)
+	{
+		open_picture(bitstreamFile);
+	}
 	/**** ENCODE ****/
+	else 
+#endif
 	if(ProcessingType == ENCODE_PICTURE)
 	{
 		CodingUnitStructure_t codingUnitStructure;

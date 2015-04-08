@@ -33,9 +33,6 @@
 #define DEFAULT_SAMPLE_VALUE		(1 << (BIT_DEPTH - 1))
 #define PICTURE_YUV420_SIZE			(((DEFAULT_PICTURE_WIDTH)*(DEFAULT_PICTURE_HEIGHT)*(3))>>1)
 
-// ENABLE ENCODER RECON OUT
-// Enables output of best reconstructed CUs
-#define ENABLE_ENCODER_RECON_OUT	(0)
 
 
 // LZ4

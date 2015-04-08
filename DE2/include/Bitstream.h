@@ -11,12 +11,12 @@
 
 
 // Defined in implementation of write header
-#define HEADER_WIDTH_OFFSET				0
-#define HEADER_HEIGHT_OFFSET			2
-#define HEADER_BWIDTH_OFFSET			4
-#define HEADER_BHEIGHT_OFFSET			5
-#define HEADER_QP_OFFSET				6
-#define HEADER_LZ4_OFFSET				7
+#define HEADER_LZ4_OFFSET				0
+#define HEADER_WIDTH_OFFSET				4
+#define HEADER_HEIGHT_OFFSET			6
+#define HEADER_BWIDTH_OFFSET			8
+#define HEADER_BHEIGHT_OFFSET			9
+#define HEADER_QP_OFFSET				10
 #define BITSTREAM_HEADER_LEN			11 
 
 // PREDICTION

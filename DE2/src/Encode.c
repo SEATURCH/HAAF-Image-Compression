@@ -483,7 +483,7 @@ void EncodeCu(
 	// If N2 build is enabled, then use the VHDL code for prediction
 	#if N2_BUILD
 		PredictionVHDL(referenceBuffer);
-		processType = Hardware;
+		processType = Software;//Hardware;
 	#endif
 
 

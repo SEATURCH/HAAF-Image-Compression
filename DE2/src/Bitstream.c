@@ -318,40 +318,41 @@ void WriteHeaderInfo(
 	// Initialize bytesWritten to 0
 	*bytesWritten = 0;
 
-	// Write width to bytes 1, 0
+	// Write transformCoeffLen to bytes 3 2 1 0
+	*((unsigned int*)outputBufferPtr) = transformCoeffLen;
+	outputBufferPtr += sizeof(unsigned int);
+	*bytesWritten += sizeof(unsigned int);
+
+	// Write width to bytes 5 4
 	*((unsigned short *)outputBufferPtr) = width;
 	outputBufferPtr += sizeof(unsigned short);
 	*bytesWritten += sizeof(unsigned short);
 	
-	// Write height to bytes 3, 2
+	// Write height to bytes 7 6
 	*((unsigned short *)outputBufferPtr) = height;
 	outputBufferPtr += sizeof(unsigned short);
 	*bytesWritten += sizeof(unsigned short);
 
-	// Write BlockWidth to bytes 4
+	// Write BlockWidth to bytes 8
 	*outputBufferPtr = blockWidth;
 	outputBufferPtr += sizeof(unsigned char);
 	*bytesWritten += sizeof(unsigned char);
 	
-	// Write BlockHeight to bytes 5
+	// Write BlockHeight to bytes 9
 	*outputBufferPtr = blockHeight;
 	outputBufferPtr += sizeof(unsigned char);
 	*bytesWritten += sizeof(unsigned char);
 
-	// Write QP to bytes 6
+	// Write QP to bytes 10
 	*outputBufferPtr = qp;
 	outputBufferPtr += sizeof(unsigned char);
 	*bytesWritten += sizeof(unsigned char);
-
-	// Write transformCoeffLen to bytes 10, 9, 8, 7
-	*((unsigned int*)outputBufferPtr) = transformCoeffLen;
-	outputBufferPtr += sizeof(unsigned int);
-	*bytesWritten += sizeof(unsigned int);
 
 	if(*bytesWritten != BITSTREAM_HEADER_LEN)
 	{
 		printf("WARNING! HEADER BYTES WRITTEN DO NOT MATCH HEADER LENGTH SPEC: %d, %d!\n", *bytesWritten, BITSTREAM_HEADER_LEN);
 	}
+
 }
 
 

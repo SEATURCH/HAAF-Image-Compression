@@ -66,7 +66,10 @@ int main(int argc, char* argv[])
 
 // DE2 Build
 #elif N2_BUILD
-	ProcessingType = DECODE_PICTURE;
+	ProcessingType = ENCODE_PICTURE;
+	pictureWidth = DEFAULT_PICTURE_WIDTH;
+	pictureHeight = DEFAULT_PICTURE_HEIGHT;
+	qp = 15;
 #endif
 
 
@@ -113,6 +116,7 @@ int main(int argc, char* argv[])
 
 		// Input the picture
 	#if N2_BUILD
+		// Only 320x240 is supported for NiosII
 		unsigned char receivedBuffer[BUFFERSIZE];
 		unsigned char sendBuffer[BUFFERSIZE];
 
@@ -122,7 +126,7 @@ int main(int argc, char* argv[])
 		printf("Recieve done \n");
 
 		OpenSerialYUVIntoInputPicture(
-			&codingUnitStructure.inputPicture, 
+			&inputPicture,
 			receivedBuffer, 
 			DEFAULT_PICTURE_WIDTH, 
 			DEFAULT_PICTURE_HEIGHT);
@@ -154,25 +158,49 @@ int main(int argc, char* argv[])
 			&outputBitstream);
 
 		// Write the bitstream to file
+#if N2_BUILD
+		OpenDataIntoSerialData(
+				sendBuffer,
+				BUFFERSIZE,
+				outputBitstream.data,
+				outputBitstream.size
+				);
+		printf("Sending\n");
+		Send(sendBuffer);
+		printf("Send Done\n");
+#elif VS_BUILD
 		WriteBitstreamToFile(
 			&outputBitstream,
 			bitstreamFile);
+#endif
 
-		printf("Done!\n\n\n");
 
+// ENABLE ENCODER RECON OUT
+// Enables output of best reconstructed CUs
+#define ENABLE_ENCODER_RECON_OUT	(0)
+		// Recon Code (deprecated)
 #if ENABLE_ENCODER_RECON_OUT
 		// Output the picture
 	#if N2_BUILD
-		//OpenReconBestIntoSerialYUV(&codingUnitStructure.reconBestBuffer, sendBuffer, DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
-		//printf("Sending\n");
-		//Send(sendBuffer);
-		//printf("Send Done\n");
+		OpenReconBestIntoSerialYUV(
+				&inputPicture,//&codingUnitStructure.reconBestBuffer,
+				sendBuffer,
+				DEFAULT_PICTURE_WIDTH,
+				DEFAULT_PICTURE_HEIGHT);
+
+		printf("Sending\n");
+		Send(sendBuffer);
+		printf("Send Done\n");
 	#elif VS_BUILD
 		SaveYUVToFile(
 			OUTPUT_RECON_YUV, 
 			&(codingUnitStructure.reconBestBuffer));
 	#endif
 #endif 
+
+		printf("Done!\n\n\n");
+
+
 		/*** DECONSTRUCTION ***/
 		CodingUnitStructureDeconstructor(&codingUnitStructure);
 		BufferDescriptorDeconstructor(&inputPicture);

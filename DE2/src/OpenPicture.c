@@ -1,5 +1,7 @@
 #include "../include/OpenPicture.h"
 
+#include "string.h"
+
 #if N2_BUILD
 void Receive(unsigned char* receive) {
 	int index = 0;
@@ -88,6 +90,28 @@ void SaveYUVToFile(
 	//Write the quantized output back to the PI via a serial stream
 	fclose(file_handler);
 }
+
+void OpenDataIntoSerialData(
+		unsigned char *dst,
+		int dstLength,
+		unsigned char *src,
+		int srcLength)
+{
+	unsigned char *dstCursor = dst;
+
+	// Check header overflow
+	if(srcLength + sizeof(int) > dstLength)
+	{
+		printf("Bitstream does not fit inside bitstream!\n");
+	}
+
+	*((int *) dstCursor) = srcLength;
+	dstCursor += sizeof(int);
+
+	memcpy(dstCursor, src, sizeof(unsigned char) * srcLength);
+
+}
+
 
 //Parse the yuv file
 void OpenSerialYUVIntoInputPicture(

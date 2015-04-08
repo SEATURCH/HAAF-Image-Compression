@@ -361,12 +361,14 @@ void EncodeDecode(
 	CuBuffer	predictionBuffer;
 	CuIntBuffer residualBufferDWord;
 
-	// Create prediction based off reference and predictionModeCursor
-	PredictionFuncPtrTable[predictionMode](
-		predictionBuffer, 
-		codingUnitWidth, 
-		referenceBuffer, 
-		codingUnitWidth);
+
+		// Create prediction based off reference and predictionModeCursor
+		PredictionFuncPtrTable[predictionMode](
+			predictionBuffer, 
+			codingUnitWidth, 
+			referenceBuffer, 
+			codingUnitWidth);
+
 
 	// ***32bits rather than 8bits are used for each sample from this point on.
 
@@ -473,12 +475,15 @@ void EncodeCu(
 		reconYStride,//yStride, 
 		CODING_UNIT_WIDTH, 
 		CODING_UNIT_HEIGHT);
+	
 
+	#if N2_BUILD
+		PredictionVHDL(referenceBuffer);
+	#endif
 	// Prediction Mode Loop
 	for(predictionModeCursor = predictionModeStart; predictionModeCursor < predictionModeEnd; predictionModeCursor++)
 	{
 		int currentPredictionModeCost;
-
 		///***** ENCODING/DECODING *****/
 		EncodeDecode(
 			transformBufferDWord[predictionModeCursor], 

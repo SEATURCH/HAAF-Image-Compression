@@ -38,7 +38,6 @@
 #define ENABLE_ENCODER_RECON_OUT	(0)
 
 
-
 // LZ4
 #if N2_BUILD
 #define LZ4_COMPRESSION_LEVEL (0)

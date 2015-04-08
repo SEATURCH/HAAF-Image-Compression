@@ -55,10 +55,10 @@ void PredictionReadBuffer(
 
 	for(bufferCursor=0;bufferCursor<4*CODING_UNIT_WIDTH;bufferCursor++) {
 	  buffer[bufferCursor] = IORD_32DIRECT(BASE, 4*(base_address+bufferCursor*4));
-	  dst[4*bufferCursor] = (unsigned char) buffer[bufferCursor] & 0x000000FF;
-	  dst[1+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x0000FF00) >> 8;
-	  dst[2+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x00FF000) >> 16;
-	  dst[3+4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0xFF000000) >>24;
+	  dst[4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x000000FF);
+	  dst[1+4*bufferCursor] = (unsigned char) ((buffer[bufferCursor] & 0x0000FF00) >> 8);
+	  dst[2+4*bufferCursor] = (unsigned char) ((buffer[bufferCursor] & 0x00FF0000) >> 16);
+	  dst[3+4*bufferCursor] = (unsigned char) ((buffer[bufferCursor] & 0xFF000000) >>24);
 	}
 #endif
 }

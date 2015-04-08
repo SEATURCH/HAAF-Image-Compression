@@ -45,12 +45,7 @@ component my_ram_32bits IS
 		q		: OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
 	);
 	END component;
---component leds IS
---	PORT
---	(
---		LEDR		: OUT STD_LOGIC_VECTOR (17 DOWNTO 0)
---	);
---END component;
+
 	constant reference_buffer_size : integer := 33;
 	signal wr_en_ram0, wr_en_ram1, wr_en_ram2, wr_en_ram3, wr_en_ram4 : std_logic;
 	signal wr_data_ram1, wr_data_ram2, wr_data_ram3, wr_data_ram4 : std_logic_vector(31 downto 0);
@@ -123,45 +118,20 @@ begin
 		variable go_back_to_RW: std_logic;
 		variable temp_currentAddress : integer;
 	begin
-	--LEDR <= led_signal;
 		if(reset_n = '0') then
 			next_state := RESET;
-		--	led_signal <= (others => '1');
 		elsif(rising_edge(clk)) then
 			case curr_state is
 				when RESET =>
 					next_state := RW;
 					done <= '0';
-			--		led_signal <= (0 => '1', others => '0');
-					--test <= (others => '0');
 				when RW =>
-	--			led_signal <= (1 => '1', others => '0');
---				if(to_integer(unsigned(addr)) >= 0 AND to_integer(unsigned(addr)) <= 255 AND wr_en = '1') then
---				test <= writedata;
---				end if;
---				next_state := curr_state;
 					done <= '1';
 					wr_en_ram1 <= '0';
 					wr_en_ram2 <= '0';
 					wr_en_ram3 <= '0';
 					wr_en_ram4 <= '0';
-		--			readThis := NONE_S;
 					currentAddress <= addr(7 downto 0);
-----					wr_en_ram0 <= '0';
-----					if(to_integer(unsigned(addr)) >= 0 AND to_integer(unsigned(addr)) <= 255 AND wr_en = '1') then --writing input picture
-----						wr_en_ram0 <= '1';
---					if(to_integer(unsigned(addr)) >= 256 AND to_integer(unsigned(addr)) <= 511 AND rd_en = '1') then 				--trying to read hori pred
---						readThis := HORI_S;
---						next_state := SKIP_ONE_CLOCK; --We must skip one clock cycle, because the RAM needs 1 clock cycle to fetch the values
---					elsif(to_integer(unsigned(addr)) >= 512 AND to_integer(unsigned(addr)) <= 767 AND rd_en = '1') then 			--trying to read vert pred
---						readThis := VERT_S;
---						next_state := SKIP_ONE_CLOCK;
---					elsif(to_integer(unsigned(addr)) >= 768 AND to_integer(unsigned(addr)) <= 1023 AND rd_en = '1') then 			--trying to read DC pred
---						readThis := DC_S;
---						next_state := SKIP_ONE_CLOCK;
---					elsif(to_integer(unsigned(addr)) >= 1024 AND to_integer(unsigned(addr)) <= 1279 AND rd_en = '1') then 		--trying to read planar pred
---						readThis := PLANAR_S;
---						next_state := SKIP_ONE_CLOCK;
 					if(to_integer(unsigned(addr)) = 1280 AND wr_en = '1') then --writedata has the topleft reference element
 						tl := to_integer(unsigned(writedata(7 downto 0)));
 					elsif(to_integer(unsigned(addr)) >= 1281 AND  to_integer(unsigned(addr)) <= 1296 AND wr_en = '1') then --writedata has the top elements
@@ -179,19 +149,12 @@ begin
 						counter := 0;
 						next_state := CHANGE_ADDR;
 						end if;
---					elsif(to_integer(unsigned(addr)) = 1314 AND rd_en = '1') then 																--trying to read 'done' bit
---				--readdata(0) <= '1';
---			readThis := TEST_S;
---						next_state := SKIP_ONE_CLOCK;
---					end if;
 				when CHANGE_ADDR => 
-				--led_signal <= (2 => '1', others => '0');
 					--Changing the address being written to (increments of 4, since we write 32 bits at once)--
 					currentAddress <= std_logic_vector(to_unsigned(4 * counter, currentAddress'length));
 					done <= '0';
 					next_state := WAIST_CYCLE;
 				when WAIST_CYCLE =>  
-				--led_signal <= (3 => '1', others => '0');
 					--Setup to write to RAM, as well as calculating values needed for prediction--
 					wr_en_ram1 <= '1';
 					wr_en_ram2 <= '1';
@@ -213,7 +176,6 @@ begin
 					a := 16*(ho(15)+ve(15)+1) - 7*(V+H);
 					next_state := PREDICTION;
 				when PREDICTION =>
-	--			led_signal <= (4 => '1', others => '0');
 					--HORIZONTAL PREDICTION--
 					temp_currentAddress := to_integer(unsigned(currentAddress));
 					x := temp_currentAddress mod 16;
@@ -299,27 +261,7 @@ begin
 						counter := counter + 1;
 						next_state := CHANGE_ADDR;
 					end if;
-				when SKIP_ONE_CLOCK =>
-					next_state := READ_MEMORY;
-				when READ_MEMORY =>
-					case readThis is
-						when HORI_S =>
-						--	readdata <= hori_ram_data;
-						when VERT_S =>
-						--	readdata <= vert_ram_data;
-						when DC_S =>
-						--	readdata <= DC_ram_data;
---							when TEST_S =>
-						--	readdata <= (1 => '1', others => '0');
-						when others =>
-						--	readdata <= planar_ram_data;
-					end case;
-					next_state := RW;
 			end case;
---			
---			if(to_integer(unsigned(addr)) = 1314 AND rd_en = '1') then 																--trying to read 'done' bit
---				readdata(0) <= '1';
---			end if;
 			curr_state := next_state;
 			--RESULT_HORI_BLOCK <= hori;
 			--RESULT_VERT_BLOCK <= vert;
@@ -330,20 +272,17 @@ begin
   
   process(rd_en, addr)
   begin
---	if(to_integer(unsigned(addr)) >= 256 AND to_integer(unsigned(addr)) <= 511 AND rd_en = '1') then
---				readdata <= test;
---				els
-				if(to_integer(unsigned(addr)) >= 256 AND to_integer(unsigned(addr)) <= 511 AND rd_en = '1') then 				--trying to read hori pred
-					readdata <= hori_ram_data; 	
-				elsif(to_integer(unsigned(addr)) >= 512 AND to_integer(unsigned(addr)) <= 767 AND rd_en = '1') then 			--trying to read vert pred
-					readdata <= vert_ram_data;
-				elsif(to_integer(unsigned(addr)) >= 768 AND to_integer(unsigned(addr)) <= 1023 AND rd_en = '1') then 			--trying to read DC pred
-					readdata <= DC_ram_data;
-				elsif(to_integer(unsigned(addr)) >= 1024 AND to_integer(unsigned(addr)) <= 1279 AND rd_en = '1') then 		--trying to read planar pred
-					readdata <= planar_ram_data;
-				elsif(to_integer(unsigned(addr)) = 1314 AND rd_en = '1') then 																--trying to read 'done' bit
-					readdata(0) <= done; --(0 => '1', others => '0');
-				end if;
+			if(to_integer(unsigned(addr)) >= 256 AND to_integer(unsigned(addr)) <= 511 AND rd_en = '1') then 				--trying to read hori pred
+				readdata <= hori_ram_data; 	
+			elsif(to_integer(unsigned(addr)) >= 512 AND to_integer(unsigned(addr)) <= 767 AND rd_en = '1') then 			--trying to read vert pred
+				readdata <= vert_ram_data;
+			elsif(to_integer(unsigned(addr)) >= 768 AND to_integer(unsigned(addr)) <= 1023 AND rd_en = '1') then 			--trying to read DC pred
+				readdata <= DC_ram_data;
+			elsif(to_integer(unsigned(addr)) >= 1024 AND to_integer(unsigned(addr)) <= 1279 AND rd_en = '1') then 		--trying to read planar pred
+				readdata <= planar_ram_data;
+			elsif(to_integer(unsigned(addr)) = 1314 AND rd_en = '1') then 																--trying to read 'done' bit
+				readdata(0) <= done; --(0 => '1', others => '0');
+			end if;
   end process;
   
   process(wr_en,addr)
@@ -353,25 +292,4 @@ begin
 			wr_en_ram0 <= '1';
 		end if;
   end process;
-  
-  
---  process(curr_state)
---	--Changing the address being written to (increments of 4, since we write 32 bits at once)--
---	currentAddress <= std_logic_vector(to_unsigned(4 * counter, currentAddress'length));
---  end process;
-
-
-
---	--readdata
---	process (rd_en, addr)
---	begin
---		readdata	<=	(others => '-');
---		if	(rd_en =	'1')	then
---						if	(to_integer(unsigned(addr)) = 1314) then
---							readdata <= (others => '1');
---						else
---							readdata <= (others => '0');
---						end if;
---		end if;
---	end process;
 end behaviour;

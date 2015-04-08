@@ -4,6 +4,9 @@
 #define PREDICTION_H
 
 #include "../include/Utility.h"
+#if N2_BUILD
+#include "IO.h"
+#endif
 
 typedef enum PredictionMode_s {
 	Invalid			= -1,
@@ -13,6 +16,46 @@ typedef enum PredictionMode_s {
 	Planar			= 3,
 	PredictionModeCount = 4,
 } PredictionMode_t;
+
+
+#if N2_BUILD
+#define BASE (volatile int *) 0x4000
+#define DC_BASE_ADDRESS 768
+#define VERTICAL_BASE_ADDRESS 512
+#define HORIZONTAL_BASE_ADDRESS 256
+#define PLANAR_BASE_ADDRESS 1024
+#define TOPLEFT_ELEMENT_BASE_ADDRESS 1280
+#define TOP_ELEMENT_BASE_ADDRESS 1281
+#define LEFT_ELEMENT_BASE_ADDRESS 1297
+#define GO_BIT_BASE_ADDRESS 1313
+#define DONE_BIT_BASE_ADDRESS 1314
+
+void PredictionVHDL(
+	// IN
+	unsigned char *referenceBuffer);
+
+void PredictionModeDCRead (
+	// OUT
+	unsigned char *dst, 
+	int dstStride);
+
+void PredictionModeVerticalRead (
+	// OUT
+	unsigned char *dst, 
+	int dstStride);
+
+void PredictionModeHorizontalRead (
+	// OUT
+	unsigned char *dst, 
+	int dstStride);
+
+void PredictionModePlanarRead (
+	// OUT
+	unsigned char *dst, 
+	int dstStride);
+#endif
+
+
 
 void PredictionModeDC(
 	unsigned char *dst, 
@@ -36,15 +79,28 @@ void PredictionModePlanar(
 	int size);
 
 static void (*PredictionFuncPtrTable[PredictionModeCount]) (
+#if VS_BUILD
 	unsigned char *dst, 
-	int dstStride, 
+	int dstStride,
 	unsigned char *referenceBuffer, 
-	int size) = 
+	int size
+#elif N2_BUILD
+	unsigned char *dst, 
+	int dstStride
+#endif
+) = 
 	{
+#if N2_BUILD
+		PredictionModeDCRead,
+		PredictionModeVerticalRead,
+		PredictionModeHorizontalRead,
+		PredictionModePlanarRead,
+#elif VS_BUILD
 		PredictionModeDC, 
 		PredictionModeVertical, 
 		PredictionModeHorizontal,
 		PredictionModePlanar,
+#endif
 	};
 
 /*** RESIDUAL/RECON ***/

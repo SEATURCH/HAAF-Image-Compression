@@ -20,6 +20,14 @@
          type = "int";
       }
    }
+   element PU_0
+   {
+      datum _sortIndex
+      {
+         value = "18";
+         type = "int";
+      }
+   }
    element Rasp_Input
    {
       datum _sortIndex
@@ -115,6 +123,14 @@
          type = "String";
       }
    }
+   element PU_0.avalon_slave_0
+   {
+      datum baseAddress
+      {
+         value = "16384";
+         type = "String";
+      }
+   }
    element character_lcd_0
    {
       datum _sortIndex
@@ -184,6 +200,19 @@
          type = "int";
       }
    }
+   element onchip_memory2_0.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "0";
+         type = "String";
+      }
+   }
    element Rasp_Output.s1
    {
       datum _lockedAddress
@@ -194,58 +223,6 @@
       datum baseAddress
       {
          value = "4096";
-         type = "String";
-      }
-   }
-   element sdram.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "16777216";
-         type = "String";
-      }
-   }
-   element push.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "8192";
-         type = "String";
-      }
-   }
-   element LEDs.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "10288";
-         type = "String";
-      }
-   }
-   element timer.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "10240";
          type = "String";
       }
    }
@@ -262,6 +239,58 @@
          type = "String";
       }
    }
+   element push.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "8192";
+         type = "String";
+      }
+   }
+   element Ready_Send.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "4192";
+         type = "String";
+      }
+   }
+   element LEDs.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "10288";
+         type = "String";
+      }
+   }
+   element sdram.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "16777216";
+         type = "String";
+      }
+   }
    element Recieve_Mode.s1
    {
       datum _lockedAddress
@@ -275,23 +304,20 @@
          type = "String";
       }
    }
-   element Ready_Send.s1
-   {
-      datum baseAddress
-      {
-         value = "4192";
-         type = "String";
-      }
-   }
    element Ready_Read.s1
    {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
       datum baseAddress
       {
          value = "4224";
          type = "String";
       }
    }
-   element onchip_memory2_0.s1
+   element timer.s1
    {
       datum _lockedAddress
       {
@@ -300,20 +326,7 @@
       }
       datum baseAddress
       {
-         value = "0";
-         type = "String";
-      }
-   }
-   element switches.s1
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-      datum baseAddress
-      {
-         value = "10272";
+         value = "10240";
          type = "String";
       }
    }
@@ -327,6 +340,19 @@
       datum baseAddress
       {
          value = "4160";
+         type = "String";
+      }
+   }
+   element switches.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "10272";
          type = "String";
       }
    }
@@ -369,7 +395,7 @@
  <parameter name="projectName" value="Base.qpf" />
  <parameter name="sopcBorderPoints" value="false" />
  <parameter name="systemHash" value="1" />
- <parameter name="timeStamp" value="1425242272468" />
+ <parameter name="timeStamp" value="1428451261812" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
  <interface name="clk" internal="clk_0.clk_in" type="clock" dir="end" />
@@ -539,7 +565,7 @@
   <parameter name="tightlyCoupledInstructionMaster2AddrWidth" value="1" />
   <parameter name="tightlyCoupledInstructionMaster3AddrWidth" value="1" />
   <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='onchip_memory2_0.s1' start='0x0' end='0x1000' /><slave name='nios2_qsys_0.jtag_debug_module' start='0x1800' end='0x2000' /><slave name='SDCard.avalon_sdcard_slave' start='0x2400' end='0x2800' /><slave name='sdram.s1' start='0x1000000' end='0x1800000' /></address-map>]]></parameter>
-  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='onchip_memory2_0.s1' start='0x0' end='0x1000' /><slave name='Rasp_Output.s1' start='0x1000' end='0x1020' /><slave name='Rasp_Input.s1' start='0x1020' end='0x1030' /><slave name='Recieve_Mode.s1' start='0x1030' end='0x1040' /><slave name='Send_Mode.s1' start='0x1040' end='0x1060' /><slave name='Ready_Send.s1' start='0x1060' end='0x1080' /><slave name='Ready_Read.s1' start='0x1080' end='0x1090' /><slave name='nios2_qsys_0.jtag_debug_module' start='0x1800' end='0x2000' /><slave name='push.s1' start='0x2000' end='0x2010' /><slave name='SDCard.avalon_sdcard_slave' start='0x2400' end='0x2800' /><slave name='timer.s1' start='0x2800' end='0x2820' /><slave name='switches.s1' start='0x2820' end='0x2830' /><slave name='LEDs.s1' start='0x2830' end='0x2840' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x2840' end='0x2848' /><slave name='character_lcd_0.avalon_lcd_slave' start='0x2848' end='0x284A' /><slave name='sdram.s1' start='0x1000000' end='0x1800000' /></address-map>]]></parameter>
+  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='onchip_memory2_0.s1' start='0x0' end='0x1000' /><slave name='Rasp_Output.s1' start='0x1000' end='0x1020' /><slave name='Rasp_Input.s1' start='0x1020' end='0x1030' /><slave name='Recieve_Mode.s1' start='0x1030' end='0x1040' /><slave name='Send_Mode.s1' start='0x1040' end='0x1060' /><slave name='Ready_Send.s1' start='0x1060' end='0x1080' /><slave name='Ready_Read.s1' start='0x1080' end='0x1090' /><slave name='nios2_qsys_0.jtag_debug_module' start='0x1800' end='0x2000' /><slave name='push.s1' start='0x2000' end='0x2010' /><slave name='SDCard.avalon_sdcard_slave' start='0x2400' end='0x2800' /><slave name='timer.s1' start='0x2800' end='0x2820' /><slave name='switches.s1' start='0x2820' end='0x2830' /><slave name='LEDs.s1' start='0x2830' end='0x2840' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x2840' end='0x2848' /><slave name='character_lcd_0.avalon_lcd_slave' start='0x2848' end='0x284A' /><slave name='PU_0.avalon_slave_0' start='0x4000' end='0x6000' /><slave name='sdram.s1' start='0x1000000' end='0x1800000' /></address-map>]]></parameter>
   <parameter name="clockFrequency" value="50000000" />
   <parameter name="deviceFamilyName" value="Cyclone II" />
   <parameter name="internalIrqMaskSystemInfo" value="1056" />
@@ -831,6 +857,7 @@
   <parameter name="width" value="1" />
   <parameter name="clockRate" value="50000000" />
  </module>
+ <module kind="PU" version="1.0" enabled="1" name="PU_0" />
  <connection
    kind="avalon"
    version="13.0"
@@ -1244,6 +1271,22 @@
    version="13.0"
    start="clocks.sys_clk"
    end="Ready_Read.clk" />
+ <connection kind="reset" version="13.0" start="clk_0.clk_reset" end="PU_0.reset" />
+ <connection
+   kind="avalon"
+   version="13.0"
+   start="nios2_qsys_0.data_master"
+   end="PU_0.avalon_slave_0">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x4000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="reset"
+   version="13.0"
+   start="nios2_qsys_0.jtag_debug_module_reset"
+   end="PU_0.reset" />
+ <connection kind="clock" version="13.0" start="clocks.sys_clk" end="PU_0.clock" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
 </system>

@@ -17,7 +17,9 @@ typedef enum ProcessType {
 	INVALID,
 	ENCODE_PICTURE,
 	DECODE_PICTURE,
-	ENCODE_DECODE_PICTURE,
+#if PI_BUILD
+	PI_DE2_ENCODE_PICTURE,
+#endif
 };
 
 int main(int argc, char* argv[])
@@ -40,6 +42,9 @@ int main(int argc, char* argv[])
 	// Decoder Arguments:
 	// EncoderDecoder.exe inputBitstreamFile outputYUVFile
 #define NUM_DEC_ARGS	3
+	// Pi-DE2 Arguments:
+	// EncoderDecoder.exe outputHAAFFile
+#define NUM_PI_ARGS		2
 
 	if(argc == NUM_ENC_ARGS) 
 	{
@@ -56,6 +61,13 @@ int main(int argc, char* argv[])
 		bitstreamFile = argv[1];
 		yuvFile = argv[2];
 	}
+#if PI_BUILD
+	else if(argc == NUM_PI_ARGS)
+	{
+		ProcessingType = PI_DE2_ENCODE_PICTURE;
+		bitstreamFile = argv[1];
+	}
+#endif
 	else 
 	{
 		printf("Unknown number of arguments...\n");
@@ -66,11 +78,20 @@ int main(int argc, char* argv[])
 
 // DE2 Build
 #elif N2_BUILD
-	ProcessingType = DECODE_PICTURE;
+	ProcessingType = ENCODE_PICTURE;
+	pictureWidth = DEFAULT_PICTURE_WIDTH;
+	pictureHeight = DEFAULT_PICTURE_HEIGHT;
+	qp = 15;
 #endif
 
-
+#if PI_BUILD
+	if(ProcessingType == PI_DE2_ENCODE_PICTURE)
+	{
+		open_picture(bitstreamFile);
+	}
 	/**** ENCODE ****/
+	else 
+#endif
 	if(ProcessingType == ENCODE_PICTURE)
 	{
 		CodingUnitStructure_t codingUnitStructure;
@@ -113,6 +134,7 @@ int main(int argc, char* argv[])
 
 		// Input the picture
 	#if N2_BUILD
+		// Only 320x240 is supported for NiosII
 		unsigned char receivedBuffer[BUFFERSIZE];
 		unsigned char sendBuffer[BUFFERSIZE];
 
@@ -122,7 +144,7 @@ int main(int argc, char* argv[])
 		printf("Recieve done \n");
 
 		OpenSerialYUVIntoInputPicture(
-			&codingUnitStructure.inputPicture, 
+			&inputPicture,
 			receivedBuffer, 
 			DEFAULT_PICTURE_WIDTH, 
 			DEFAULT_PICTURE_HEIGHT);
@@ -154,16 +176,36 @@ int main(int argc, char* argv[])
 			&outputBitstream);
 
 		// Write the bitstream to file
+#if N2_BUILD
+		OpenDataIntoSerialData(
+				sendBuffer,
+				BUFFERSIZE,
+				outputBitstream.data,
+				outputBitstream.size
+				);
+		printf("Sending\n");
+		Send(sendBuffer);
+		printf("Send Done\n");
+#elif VS_BUILD
 		WriteBitstreamToFile(
 			&outputBitstream,
 			bitstreamFile);
+#endif
 
-		printf("Done!\n\n\n");
 
+// ENABLE ENCODER RECON OUT
+// Enables output of best reconstructed CUs
+#define ENABLE_ENCODER_RECON_OUT	(0)
+		// Recon Code (deprecated)
 #if ENABLE_ENCODER_RECON_OUT
 		// Output the picture
 	#if N2_BUILD
-		OpenReconBestIntoSerialYUV(&codingUnitStructure.reconBestBuffer, sendBuffer, DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
+		OpenReconBestIntoSerialYUV(
+				&inputPicture,//&codingUnitStructure.reconBestBuffer,
+				sendBuffer,
+				DEFAULT_PICTURE_WIDTH,
+				DEFAULT_PICTURE_HEIGHT);
+
 		printf("Sending\n");
 		Send(sendBuffer);
 		printf("Send Done\n");
@@ -173,6 +215,10 @@ int main(int argc, char* argv[])
 			&(codingUnitStructure.reconBestBuffer));
 	#endif
 #endif 
+
+		printf("Done!\n\n\n");
+
+
 		/*** DECONSTRUCTION ***/
 		CodingUnitStructureDeconstructor(&codingUnitStructure);
 		BufferDescriptorDeconstructor(&inputPicture);
@@ -217,10 +263,10 @@ int main(int argc, char* argv[])
 
 	// Output the picture
 #if N2_BUILD
-		OpenReconBestIntoSerialYUV(&codingUnitStructure.reconBestBuffer, sendBuffer, DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
-		printf("Sending\n");
-		Send(sendBuffer);
-		printf("Send Done\n");
+		//OpenReconBestIntoSerialYUV(&codingUnitStructure.reconBestBuffer, sendBuffer, DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT);
+		//printf("Sending\n");
+		//Send(sendBuffer);
+		//printf("Send Done\n");
 #elif VS_BUILD
 		printf("Writing to file: \'%s\'...\t", yuvFile);
 		SaveYUVToFile(

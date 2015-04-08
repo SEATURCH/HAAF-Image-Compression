@@ -42,7 +42,8 @@ void EncodeDecode(
 	int predictionMode, 
 	int codingUnitWidth, 
 	int codingUnitHeight,
-	int *qp);
+	int *qp,
+	int processType);
 
 void EncodeCu(
 	CodingUnitStructure_t *codingUnitStructure, 

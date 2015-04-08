@@ -33,6 +33,13 @@ void SaveYUVToFile(
 	const char* filename,
 	BufferDescriptor_t *outputPicture);
 
+void OpenDataIntoSerialData(
+		unsigned char *dst,
+		int dstLength,
+		unsigned char *src,
+		int srcLength);
+
+
 void OpenSerialYUVIntoInputPicture(
 	BufferDescriptor_t* inputPicture, 
 	unsigned char* receivedBuffer, 

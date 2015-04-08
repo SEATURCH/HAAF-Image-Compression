@@ -294,7 +294,7 @@ void Decode(
 	CuBuffer predictionBuffer;
 	
 	// Create prediction based off reference and predictionModeCursor
-	PredictionFuncPtrTable[predictionMode](
+	PredictionFuncPtrTable[Software][predictionMode](
 		predictionBuffer, 
 		codingUnitWidth, 
 		referenceBuffer, 
@@ -355,18 +355,21 @@ void EncodeDecode(
 	int predictionMode, 
 	int codingUnitWidth, 
 	int codingUnitHeight,
-	int *qp
+	int *qp,
+	int processType
 	)
 {
 	CuBuffer	predictionBuffer;
 	CuIntBuffer residualBufferDWord;
 
+
 	// Create prediction based off reference and predictionModeCursor
-	PredictionFuncPtrTable[predictionMode](
-		predictionBuffer, 
-		codingUnitWidth, 
-		referenceBuffer, 
-		codingUnitWidth);
+	PredictionFuncPtrTable[processType][predictionMode](
+			predictionBuffer, 
+			codingUnitWidth, 
+			referenceBuffer, 
+			codingUnitWidth);
+
 
 	// ***32bits rather than 8bits are used for each sample from this point on.
 
@@ -464,6 +467,9 @@ void EncodeCu(
 	int predictionModeStart = 0;
 	int predictionModeEnd = PredictionModeCount;
 
+	// Default processType is software
+	int processType = Software;
+
 	// Copy the samples into the reference buffer
 	CopyReferenceSamples(
 		referenceBuffer, 
@@ -473,12 +479,18 @@ void EncodeCu(
 		reconYStride,//yStride, 
 		CODING_UNIT_WIDTH, 
 		CODING_UNIT_HEIGHT);
+	
+	// If N2 build is enabled, then use the VHDL code for prediction
+	#if N2_BUILD
+		PredictionVHDL(referenceBuffer);
+		processType = Hardware;
+	#endif
+
 
 	// Prediction Mode Loop
 	for(predictionModeCursor = predictionModeStart; predictionModeCursor < predictionModeEnd; predictionModeCursor++)
 	{
 		int currentPredictionModeCost;
-
 		///***** ENCODING/DECODING *****/
 		EncodeDecode(
 			transformBufferDWord[predictionModeCursor], 
@@ -489,7 +501,8 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH, 
 			CODING_UNIT_HEIGHT,
-			codingUnitStructure->lumaQuantizationBuffer);
+			codingUnitStructure->lumaQuantizationBuffer,
+			processType);
 
 		/***** COST CALCULATION *****/
 		// Determine the cost of this prediction mode, and update if necessary
@@ -556,7 +569,8 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			codingUnitStructure->chromaQuantizationBuffer);
+			codingUnitStructure->chromaQuantizationBuffer,
+			Software);
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(
@@ -598,7 +612,8 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			codingUnitStructure->chromaQuantizationBuffer);
+			codingUnitStructure->chromaQuantizationBuffer,
+			Software);
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(

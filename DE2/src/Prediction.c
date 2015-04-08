@@ -2,6 +2,108 @@
 
 /*** PREDICTION ***/
 
+
+
+#if N2_BUILD
+// Assume 16x16 prediction
+void PredictionVHDL(
+	// IN
+	unsigned char *referenceBuffer)
+{
+
+	int ho[CODING_UNIT_WIDTH];
+	int ve[CODING_UNIT_HEIGHT];
+	int tl = referenceBuffer[0];
+	int refCursor = 0;
+
+	const int size = CODING_UNIT_WIDTH;
+
+	for (refCursor=0; refCursor<size; refCursor++) {
+		ho[refCursor] = (int) referenceBuffer[1+refCursor];
+		ve[refCursor] = (int) referenceBuffer[1+size+refCursor];
+	}
+
+	//Writing topleft element
+	IOWR_32DIRECT(BASE, 4*TOPLEFT_ELEMENT_BASE_ADDRESS, tl);
+
+	//Writing top 16 elements
+	for(refCursor=0; refCursor<(size>>2); refCursor++) {
+		IOWR_32DIRECT(BASE, 4*(TOP_ELEMENT_BASE_ADDRESS+4*refCursor), ho[refCursor*4+3] << 24 | ho[refCursor*4+2] << 16 | ho[refCursor*4+1] << 8 | ho[refCursor*4]);
+	}
+
+	//Writing left 16 elements
+	for(refCursor=0; refCursor<(size>>2); refCursor++) {
+		IOWR_32DIRECT(BASE, 4*(LEFT_ELEMENT_BASE_ADDRESS+4*refCursor), ve[refCursor*4+3] << 24 | ve[refCursor*4+2] << 16 | ve[refCursor*4+1] << 8 | ve[refCursor*4]);
+	}
+
+	//Writing 'go' bit
+	IOWR_32DIRECT(BASE, 4*GO_BIT_BASE_ADDRESS,1);
+}
+#endif
+
+
+void PredictionReadBuffer(
+		unsigned char *dst,
+		int dstStride,
+		int base_address)
+{
+#if N2_BUILD
+	int puCursorX;
+	int puCursorY;
+	int buffer[4*CODING_UNIT_WIDTH];
+	int bufferCursor;
+
+	for(bufferCursor=0;bufferCursor<4*CODING_UNIT_WIDTH;bufferCursor++) {
+	  buffer[bufferCursor] = IORD_32DIRECT(BASE, 4*(base_address+bufferCursor*4));
+	  dst[4*bufferCursor] = (unsigned char) (buffer[bufferCursor] & 0x000000FF);
+	  dst[1+4*bufferCursor] = (unsigned char) ((buffer[bufferCursor] & 0x0000FF00) >> 8);
+	  dst[2+4*bufferCursor] = (unsigned char) ((buffer[bufferCursor] & 0x00FF0000) >> 16);
+	  dst[3+4*bufferCursor] = (unsigned char) ((buffer[bufferCursor] & 0xFF000000) >>24);
+	}
+#endif
+}
+
+void PredictionModeDCRead (
+	// OUT
+	unsigned char *dst, 
+	int dstStride,
+	unsigned char *referenceBuffer,
+	int size)
+{
+	PredictionReadBuffer(dst, dstStride, DC_BASE_ADDRESS);
+}
+
+void PredictionModeVerticalRead (
+	// OUT
+	unsigned char *dst, 
+	int dstStride,
+	unsigned char *referenceBuffer,
+	int size)
+{
+	PredictionReadBuffer(dst, dstStride, VERTICAL_BASE_ADDRESS);
+}
+
+void PredictionModeHorizontalRead (
+	// OUT
+	unsigned char *dst, 
+	int dstStride,
+	unsigned char *referenceBuffer,
+	int size)
+{
+	PredictionReadBuffer(dst, dstStride, HORIZONTAL_BASE_ADDRESS);
+}
+
+void PredictionModePlanarRead (
+	// OUT
+	unsigned char *dst, 
+	int dstStride,
+	unsigned char *referenceBuffer,
+	int size)
+{
+	PredictionReadBuffer(dst, dstStride, PLANAR_BASE_ADDRESS);
+}
+
+
 // Creates an Average of the reference and assigns it to every sample in dst
 // - Based off H264 16x16 DC prediction mode
 void PredictionModeDC(
@@ -257,4 +359,6 @@ void CalculateReconDWord(
 		}
 	}
 }
+
+
 

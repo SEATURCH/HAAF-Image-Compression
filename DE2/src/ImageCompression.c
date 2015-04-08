@@ -13,64 +13,24 @@
 #include "../include/OpenPicture.h"
 #include "../include/Bitstream.h"
 
-// ENUM - DO NOT TOUCH
-#define ENCODE_PICTURE			(0)
-#define DECODE_PICTURE			(1)
-#define ENCODE_DECODE_PICTURE	(2)
-
-
-/**** Change this to determine process type ****/
-#define PROCESS_TYPE	(ENCODE_DECODE_PICTURE)
-
-// Enable/Disable Encoding/Decoding
-#if PROCESS_TYPE == ENCODE_DECODE_PICTURE
-
-#define ENABLE_ENCODING	(1)
-#define ENABLE_DECODING	(1)
-
-#elif PROCESS_TYPE == ENCODE_PICTURE
-
-#define ENABLE_ENCODING	(1)
-#define ENABLE_DECODING	(0)
-
-#else if PROCESS_TYPE == DECODE_PICTURE
-
-#define ENABLE_ENCODING	(0)
-#define ENABLE_DECODING	(1)
-
-#endif
-
-
-// ENCODER
-//#define PICTURE_WIDTH			(320)//(1280)
-//#define PICTURE_HEIGHT		(240)//(720)
-#define PICTURE_WIDTH			(1280)
-#define PICTURE_HEIGHT			(720)
-#define PICTURE_QP				(DEFAULT_QP_VALUE)
-//#define INPUT_YUV_FILE			("Z:\\EncodedFiles\\Cats_320x240_420.yuv")//("Z:\\EncodedFiles\\catlarge.yuv")
-//#define OUTPUT_RECON_YUV		("Z:\\EncodedFiles\\recon.yuv")//("Z:\\EncodedFiles\\recon.yuv")
-//#define OUTPUT_BITSTREAM_FILE	("Z:\\EncodedFiles\\cats_320x240.haaf")//("Z:\\EncodedFiles\\catlarge.haaf")
-#define INPUT_YUV_FILE			("Z:\\EncodedFiles\\catlarge.yuv")
-#define OUTPUT_RECON_YUV		("Z:\\EncodedFiles\\recon.yuv")
-#define OUTPUT_BITSTREAM_FILE	("Z:\\EncodedFiles\\catlarge.haaf")
-
-// DECODER
-//#define INPUT_BITSTREAM			("Z:\\EncodedFiles\\cats_320x240.haaf")
-//#define OUTPUT_YUV				("Z:\\EncodedFiles\\Decoded_cats_320x240.yuv")
-#define INPUT_BITSTREAM			("Z:\\EncodedFiles\\catlarge.haaf")
-#define OUTPUT_YUV				("Z:\\EncodedFiles\\Decoded_catlarge_1280x720_NewCost_approximate.yuv")
-
+typedef enum ProcessType {
+	INVALID,
+	ENCODE_PICTURE,
+	DECODE_PICTURE,
+	ENCODE_DECODE_PICTURE,
+};
 
 int main(int argc, char* argv[])
 {
-	int ProcessingType;
+
+	// Input Arguments
+	const char *bitstreamFile;
+	const char *yuvFile;
 	int pictureWidth;
 	int pictureHeight;
 	int qp;
 
-	const char *bitstreamFile;
-	const char *yuvFile;
-
+	int ProcessingType = INVALID;
 
 	// Determine whether encoding or decoding by using number of arguments
 #if VS_BUILD
@@ -110,19 +70,12 @@ int main(int argc, char* argv[])
 #endif
 
 
-
-
-//#if ENABLE_ENCODING 
-	/**** ENCODING ****/
+	/**** ENCODE ****/
 	if(ProcessingType == ENCODE_PICTURE)
 	{
 		CodingUnitStructure_t codingUnitStructure;
 		BufferDescriptor_t inputPicture;
 		Bitstream_t outputBitstream;
-
-		//int pictureWidth = PICTURE_WIDTH;
-		//int pictureHeight = PICTURE_HEIGHT;
-		//int requestedQP = PICTURE_QP;
 
 		// Error check inputs
 		if(qp < 0 || qp > 51) {
@@ -227,19 +180,11 @@ int main(int argc, char* argv[])
 
 	}
 
-//#endif
-
-
-//#if ENABLE_DECODING
-	/**** DECODE FILE INTO RECON ****/
-	if(ProcessingType == DECODE_PICTURE)
+	/**** DECODE ****/
+	else if(ProcessingType == DECODE_PICTURE)
 	{
 		CodingUnitStructure_t codingUnitStructure;
-		Bitstream_t inputBitstream; //  Will be constructed by OpenBitstreamFromFile
-
-		//int pictureWidth;
-		//int pictureHeight;
-		//int qp;
+		Bitstream_t inputBitstream; 
 
 		printf("HAAF IMAGE DECODER V1.0\n");
 
@@ -291,9 +236,6 @@ int main(int argc, char* argv[])
 		BitstreamDeconstructor(&inputBitstream);
 		
 	}
-
-//#endif
-
 
 	return 0;
 }

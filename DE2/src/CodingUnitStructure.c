@@ -174,7 +174,7 @@ void CodingUnitStructureConstructor(
 		{
 			for(xCursor = 0; xCursor < (CODING_UNIT_WIDTH >> 1); xCursor++)
 			{
-				codingUnitStructure->chromaQuantizationBuffer[(yCursor * (CODING_UNIT_WIDTH >> 1)) + xCursor] = BandPassFilter[(yCursor << 1) + (xCursor << 1)];
+				codingUnitStructure->chromaQuantizationBuffer[(yCursor * (CODING_UNIT_WIDTH >> 1)) + xCursor] = BandPassFilter[(yCursor << 1) + (xCursor << 1)] >> 2;
 			}
 		}
 

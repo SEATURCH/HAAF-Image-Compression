@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
 			DEFAULT_PICTURE_WIDTH, 
 			DEFAULT_PICTURE_HEIGHT);
 	#elif VS_BUILD
-		printf("Opening image from file: \'%s\'...\t", INPUT_YUV_FILE);
+		printf("Opening image from file: \'%s\'...\t", yuvFile);
 		OpenYUVFileIntoInputPicture(
 			&inputPicture, 
 			yuvFile, 
@@ -277,7 +277,7 @@ int main(int argc, char* argv[])
 		Send(sendBuffer);
 		printf("Send Done\n");
 #elif VS_BUILD
-		printf("Writing to file: \'%s\'...\t", OUTPUT_YUV);
+		printf("Writing to file: \'%s\'...\t", yuvFile);
 		SaveYUVToFile(
 			yuvFile, 
 			&(codingUnitStructure.reconBestBuffer));

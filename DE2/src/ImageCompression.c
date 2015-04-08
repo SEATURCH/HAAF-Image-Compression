@@ -13,67 +13,81 @@
 #include "../include/OpenPicture.h"
 #include "../include/Bitstream.h"
 
-// ENUM - DO NOT TOUCH
-#define ENCODE_PICTURE			(0)
-#define DECODE_PICTURE			(1)
-#define ENCODE_DECODE_PICTURE	(2)
-
-
-/**** Change this to determine process type ****/
-#define PROCESS_TYPE	(ENCODE_DECODE_PICTURE)
-
-// Enable/Disable Encoding/Decoding
-#if PROCESS_TYPE == ENCODE_DECODE_PICTURE
-
-#define ENABLE_ENCODING	(1)
-#define ENABLE_DECODING	(1)
-
-#elif PROCESS_TYPE == ENCODE_PICTURE
-
-#define ENABLE_ENCODING	(1)
-#define ENABLE_DECODING	(0)
-
-#else if PROCESS_TYPE == DECODE_PICTURE
-
-#define ENABLE_ENCODING	(0)
-#define ENABLE_DECODING	(1)
-
-#endif
-
-
-// ENCODER
-//#define PICTURE_WIDTH			(320)//(1280)
-//#define PICTURE_HEIGHT		(240)//(720)
-#define PICTURE_WIDTH			(1280)
-#define PICTURE_HEIGHT			(720)
-#define PICTURE_QP				(DEFAULT_QP_VALUE)
-//#define INPUT_YUV_FILE			("Z:\\EncodedFiles\\Cats_320x240_420.yuv")//("Z:\\EncodedFiles\\catlarge.yuv")
-//#define OUTPUT_RECON_YUV		("Z:\\EncodedFiles\\recon.yuv")//("Z:\\EncodedFiles\\recon.yuv")
-//#define OUTPUT_BITSTREAM_FILE	("Z:\\EncodedFiles\\cats_320x240.haaf")//("Z:\\EncodedFiles\\catlarge.haaf")
-#define INPUT_YUV_FILE			("Z:\\EncodedFiles\\catlarge.yuv")
-#define OUTPUT_RECON_YUV		("Z:\\EncodedFiles\\recon.yuv")
-#define OUTPUT_BITSTREAM_FILE	("Z:\\EncodedFiles\\catlarge.haaf")
-
-// DECODER
-//#define INPUT_BITSTREAM			("Z:\\EncodedFiles\\cats_320x240.haaf")
-//#define OUTPUT_YUV				("Z:\\EncodedFiles\\Decoded_cats_320x240.yuv")
-#define INPUT_BITSTREAM			("Z:\\EncodedFiles\\catlarge.haaf")
-#define OUTPUT_YUV				("Z:\\EncodedFiles\\Decoded_catlarge_1280x720_NewCost_approximate.yuv")
-
+typedef enum ProcessType {
+	INVALID,
+	ENCODE_PICTURE,
+	DECODE_PICTURE,
+	ENCODE_DECODE_PICTURE,
+};
 
 int main(int argc, char* argv[])
 {
 
-#if ENABLE_ENCODING 
-	/**** ENCODING ****/
+	// Input Arguments
+	const char *bitstreamFile;
+	const char *yuvFile;
+	int pictureWidth;
+	int pictureHeight;
+	int qp;
+
+	int ProcessingType = INVALID;
+
+	// Determine whether encoding or decoding by using number of arguments
+#if VS_BUILD
+	// Encoder Arguments:
+	// EncoderDecoder.exe inputYUVFile outputBitstreamFile width height QP
+#define NUM_ENC_ARGS	6
+	// Decoder Arguments:
+	// EncoderDecoder.exe inputBitstreamFile outputYUVFile
+#define NUM_DEC_ARGS	3
+
+	if(argc == NUM_ENC_ARGS) 
+	{
+		ProcessingType = ENCODE_PICTURE;
+		yuvFile = argv[1];
+		bitstreamFile = argv[2];
+		pictureWidth = atoi(argv[3]);
+		pictureHeight = atoi(argv[4]);
+		qp = atoi(argv[5]);
+	}
+	else if(argc == NUM_DEC_ARGS)
+	{
+		ProcessingType = DECODE_PICTURE;
+		bitstreamFile = argv[1];
+		yuvFile = argv[2];
+	}
+	else 
+	{
+		printf("Unknown number of arguments...\n");
+		printf("Encoder.exe inputYUVFile outputBitstreamFile width height QP\n");
+		printf("Decoder.exe inputBitstreamFile outputYUVFile\n");
+		return 0;
+	}
+
+// DE2 Build
+#elif N2_BUILD
+	ProcessingType = DECODE_PICTURE;
+#endif
+
+
+	/**** ENCODE ****/
+	if(ProcessingType == ENCODE_PICTURE)
 	{
 		CodingUnitStructure_t codingUnitStructure;
 		BufferDescriptor_t inputPicture;
 		Bitstream_t outputBitstream;
 
-		int pictureWidth = PICTURE_WIDTH;
-		int pictureHeight = PICTURE_HEIGHT;
-		int requestedQP = PICTURE_QP;
+		// Error check inputs
+		if(qp < 0 || qp > 51) {
+			printf("Invalid QP (%d), please choose a valid QP between 0-51", qp);
+			return 0;
+		}
+		if(((pictureWidth % 16) != 0) || ((pictureHeight % 16) != 0)) {
+			printf("Width/Height not divisible by 16! Exiting...");
+			return 0;
+		}
+		
+		printf("HAAF IMAGE ENCODER V1.0\n");
 
 		/*** CONSTRUCTION ***/
 
@@ -81,7 +95,8 @@ int main(int argc, char* argv[])
 		CodingUnitStructureConstructor(
 			&codingUnitStructure, 
 			pictureWidth, 
-			pictureHeight);
+			pictureHeight,
+			qp);
 
 		BufferDescriptorConstructor(
 			&inputPicture,
@@ -112,23 +127,26 @@ int main(int argc, char* argv[])
 			DEFAULT_PICTURE_WIDTH, 
 			DEFAULT_PICTURE_HEIGHT);
 	#elif VS_BUILD
+		printf("Opening image from file: \'%s\'...\t", yuvFile);
 		OpenYUVFileIntoInputPicture(
 			&inputPicture, 
-			INPUT_YUV_FILE, 
+			yuvFile, 
 			pictureWidth, 
 			pictureHeight);
+		printf("Done!\n");
 	#endif
+
+		printf("Input Picture: %dx%d, qp: %d\n", pictureWidth, pictureHeight, qp);
 
 		SetInputPicture(
 			&codingUnitStructure, 
 			&inputPicture);
 
-		printf("Encoding\n");
+		printf("Encoding Bitstream...\t");
 
 		// Encode the image
 		EncodeLoop(
-			&codingUnitStructure, 
-			requestedQP);
+			&codingUnitStructure);
 
 		// Generate the bitstream
 		GenerateBitstream(
@@ -138,9 +156,9 @@ int main(int argc, char* argv[])
 		// Write the bitstream to file
 		WriteBitstreamToFile(
 			&outputBitstream,
-			OUTPUT_BITSTREAM_FILE);
+			bitstreamFile);
 
-		printf("Encode Done\n");
+		printf("Done!\n\n\n");
 
 #if ENABLE_ENCODER_RECON_OUT
 		// Output the picture
@@ -162,25 +180,17 @@ int main(int argc, char* argv[])
 
 	}
 
-#endif
-
-
-#if ENABLE_DECODING
-	/**** DECODE FILE INTO RECON ****/
+	/**** DECODE ****/
+	else if(ProcessingType == DECODE_PICTURE)
 	{
 		CodingUnitStructure_t codingUnitStructure;
-		BufferDescriptor_t inputPicture;
-		Bitstream_t inputBitstream; //  Will be constructed by OpenBitstreamFromFile
+		Bitstream_t inputBitstream; 
 
-		int pictureWidth;
-		int pictureHeight;
-		int qp;
-
-		const char *inputFile = INPUT_BITSTREAM;
+		printf("HAAF IMAGE DECODER V1.0\n");
 
 		/*** CONSTRUCTION ***/
 		OpenBitstreamFromFile(
-			inputFile,
+			bitstreamFile,
 			&inputBitstream,
 			&pictureWidth,
 			&pictureHeight,
@@ -189,18 +199,21 @@ int main(int argc, char* argv[])
 		CodingUnitStructureConstructor(
 			&codingUnitStructure,
 			pictureWidth,
-			pictureHeight);
+			pictureHeight,
+			qp);
 
 		/*** MAIN ALGORITHM ***/
+		
+		printf("Output Picture: %dx%d, qp: %d\n", pictureWidth, pictureHeight, qp);
 
 		// Decode bitstream into CodingUnitStructure
+		printf("Decoding Bitstream....\t");
 		DecodeBitstream(
 			&codingUnitStructure, 
 			&inputBitstream);
 
-		codingUnitStructure.qp = qp;
-
 		DecodeLoop(&codingUnitStructure);
+		printf("Done!\n");
 
 	// Output the picture
 #if N2_BUILD
@@ -209,9 +222,11 @@ int main(int argc, char* argv[])
 		Send(sendBuffer);
 		printf("Send Done\n");
 #elif VS_BUILD
+		printf("Writing to file: \'%s\'...\t", yuvFile);
 		SaveYUVToFile(
-			OUTPUT_YUV, 
+			yuvFile, 
 			&(codingUnitStructure.reconBestBuffer));
+		printf("Done!\n\n\n");
 #endif
 
 
@@ -221,9 +236,6 @@ int main(int argc, char* argv[])
 		BitstreamDeconstructor(&inputBitstream);
 		
 	}
-
-#endif
-
 
 	return 0;
 }

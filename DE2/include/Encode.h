@@ -29,7 +29,7 @@ void Decode(
 	int predictionMode, 
 	int codingUnitWidth,
 	int codingUnitHeight,
-	int qp);
+	int *qp);
 
 void EncodeDecode(
 	// OUT
@@ -42,21 +42,19 @@ void EncodeDecode(
 	int predictionMode, 
 	int codingUnitWidth, 
 	int codingUnitHeight,
-	int qp);
+	int *qp);
 
 void EncodeCu(
 	CodingUnitStructure_t *codingUnitStructure, 
 	int cuX, 
-	int cuY,
-	int qpValue);
+	int cuY);
 
 void DecodeLoop(
 	CodingUnitStructure_t *codingUnitStructure
 	);
 
 void EncodeLoop(
-	CodingUnitStructure_t *codingUnitStructure,
-	int qpValue);
+	CodingUnitStructure_t *codingUnitStructure);
 
 void GenerateBitstream(
 	CodingUnitStructure_t *codingUnitStructure,

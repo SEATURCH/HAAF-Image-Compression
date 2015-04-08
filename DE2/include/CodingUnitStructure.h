@@ -64,13 +64,17 @@ typedef struct CodingUnitStructure_s
 
 	// Transform Picture Buffers
 	BufferDescriptor_t transformBestBuffer;
-	int qp;
 
 	// Prediction Variables
 	PredictionMode_t *bestPredictionModes;
 
 	// Recon Picture Buffers
 	BufferDescriptor_t reconBestBuffer;
+
+	// Quantization Parameters
+	int qp;
+	int lumaQuantizationBuffer[CODING_UNIT_HEIGHT * CODING_UNIT_WIDTH];
+	int chromaQuantizationBuffer[(CODING_UNIT_HEIGHT >> 1) * (CODING_UNIT_WIDTH >> 1)];
 
 } CodingUnitStructure_t;
 
@@ -85,7 +89,8 @@ void BufferDescriptorDeconstructor(BufferDescriptor_t *pictureBuffer);
 void CodingUnitStructureConstructor(
 	CodingUnitStructure_t *codingUnitStructure, 
 	int pictureWidth, 
-	int pictureHeight);
+	int pictureHeight,
+	int qp);
 void CodingUnitStructureDeconstructor(CodingUnitStructure_t *codingUnitStructure);
 
 

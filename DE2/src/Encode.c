@@ -116,8 +116,7 @@ int ComputeCost(
 void DecodeCu(
 	CodingUnitStructure_t *codingUnitStructure, 
 	int cuX, 
-	int cuY,
-	int qpValue)
+	int cuY)
 {
 	// Encode Buffers
 	CuIntBuffer transformBufferDWord;
@@ -187,7 +186,7 @@ void DecodeCu(
 		predictionMode, 
 		CODING_UNIT_WIDTH, 
 		CODING_UNIT_HEIGHT,
-		qpValue);
+		codingUnitStructure->lumaQuantizationBuffer);
 
 	// Copy recon buffer into recon best buffer
 	CopyBlockByte(
@@ -227,7 +226,7 @@ void DecodeCu(
 			predictionMode, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			qpValue);
+			codingUnitStructure->chromaQuantizationBuffer);
 	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
@@ -266,7 +265,7 @@ void DecodeCu(
 			predictionMode, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			qpValue);
+			codingUnitStructure->chromaQuantizationBuffer);
 	
 		// Copy recon buffer into recon best buffer
 		CopyBlockByte(
@@ -287,7 +286,7 @@ void Decode(
 	int predictionMode, 
 	int codingUnitWidth,
 	int codingUnitHeight,
-	int qp)
+	int *qp)
 {
 	CuIntBuffer invQuantizeBuffer;
 	CuIntBuffer invTransformBufferDWord;
@@ -356,7 +355,7 @@ void EncodeDecode(
 	int predictionMode, 
 	int codingUnitWidth, 
 	int codingUnitHeight,
-	int qp
+	int *qp
 	)
 {
 	CuBuffer	predictionBuffer;
@@ -411,8 +410,7 @@ void EncodeDecode(
 void EncodeCu(
 	CodingUnitStructure_t *codingUnitStructure, 
 	int cuX, 
-	int cuY,
-	int qpValue)
+	int cuY)
 {
 	// Encode Buffers
 	CuIntBuffer transformBufferDWord[PredictionModeCount];
@@ -477,7 +475,7 @@ void EncodeCu(
 		CODING_UNIT_HEIGHT);
 
 	// Prediction Mode Loop
-	for(predictionModeCursor = predictionModeStart; predictionModeCursor < predictionModeEnd/*PredictionModeCount*/; predictionModeCursor++)
+	for(predictionModeCursor = predictionModeStart; predictionModeCursor < predictionModeEnd; predictionModeCursor++)
 	{
 		int currentPredictionModeCost;
 
@@ -491,7 +489,7 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH, 
 			CODING_UNIT_HEIGHT,
-			qpValue);
+			codingUnitStructure->lumaQuantizationBuffer);
 
 		/***** COST CALCULATION *****/
 		// Determine the cost of this prediction mode, and update if necessary
@@ -558,7 +556,7 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			qpValue);
+			codingUnitStructure->chromaQuantizationBuffer);
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(
@@ -600,7 +598,7 @@ void EncodeCu(
 			predictionModeCursor, 
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1,
-			qpValue);
+			codingUnitStructure->chromaQuantizationBuffer);
 	
 		// Copy transform buffer into transform best buffer
 		CopyDWordToDWordBuffer(
@@ -640,18 +638,17 @@ void DecodeLoop(
 			DecodeCu(
 				codingUnitStructure, 
 				cuCursorX, 
-				cuCursorY,
-				codingUnitStructure->qp);
-
+				cuCursorY);
+#if N2_BUILD
 			printf("Decoding %d/%d CUs!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
+#endif
 		}
 	}
 }
 
 
 void EncodeLoop(
-	CodingUnitStructure_t *codingUnitStructure,
-	int qpValue
+	CodingUnitStructure_t *codingUnitStructure
 	)
 {
 	int cuCursorX;
@@ -667,14 +664,12 @@ void EncodeLoop(
 			EncodeCu(
 				codingUnitStructure, 
 				cuCursorX, 
-				cuCursorY,
-				qpValue);
+				cuCursorY);
+#if N2_BUILD
 			printf("Encoding %d/%d CUs!\n", cuCursorY*codingUnitStructure->numCusWidth + cuCursorX + 1, codingUnitStructure->numCusWidth * codingUnitStructure->numCusHeight);
+#endif
 		}
 	}
-
-	// Update the QP value after encoding is finished
-	codingUnitStructure->qp = qpValue;
 }
 // Requires EncodeLoop has run successfully on codingUnitStructure
 void GenerateBitstream(

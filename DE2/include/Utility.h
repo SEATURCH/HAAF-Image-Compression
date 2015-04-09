@@ -118,6 +118,22 @@ void CopyDWordToDWordBuffer(
 	int width, 
 	int height);
 
+void CopyWordToDWordBuffer(
+	short *src, 
+	int srcStride, 
+	int *dst, 
+	int dstStride, 
+	int width,
+	int height);
+
+void CopyDWordToWordBuffer(
+	int *src, 
+	int srcStride, 
+	short *dst, 
+	int dstStride, 
+	int width,
+	int height);
+
 
 /*** DEBUG FUNCTIONS **/
 void PrintBlock(

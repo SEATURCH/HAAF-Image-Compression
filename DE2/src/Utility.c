@@ -173,6 +173,47 @@ void CopyDWordToDWordBuffer(
 	}
 }
 
+void CopyWordToDWordBuffer(
+	short *src, 
+	int srcStride, 
+	int *dst, 
+	int dstStride, 
+	int width,
+	int height)
+{
+	int widthCursor = 0;
+	int heightCursor = 0;
+
+	for(heightCursor = 0; heightCursor < height; heightCursor++)
+	{
+		for(widthCursor = 0; widthCursor < width; widthCursor++)
+		{
+			dst[(heightCursor * dstStride) + widthCursor] = src[(heightCursor * srcStride) + widthCursor];
+			//printf("(%d, %d), dst: %d, src : %d\n", widthCursor, heightCursor, dst[(heightCursor * dstStride) + widthCursor], src[(heightCursor * srcStride) + widthCursor]);
+		}
+	}
+}
+void CopyDWordToWordBuffer(
+	int *src, 
+	int srcStride, 
+	short *dst, 
+	int dstStride, 
+	int width,
+	int height)
+{
+	int widthCursor = 0;
+	int heightCursor = 0;
+
+	for(heightCursor = 0; heightCursor < height; heightCursor++)
+	{
+		for(widthCursor = 0; widthCursor < width; widthCursor++)
+		{
+			dst[(heightCursor * dstStride) + widthCursor] = src[(heightCursor * srcStride) + widthCursor];
+			//printf("(%d, %d), dst: %d, src : %d\n", widthCursor, heightCursor, dst[(heightCursor * dstStride) + widthCursor], src[(heightCursor * srcStride) + widthCursor]);
+		}
+	}
+}
+
 
 
 /*** DEBUG FUNCTIONS ***/

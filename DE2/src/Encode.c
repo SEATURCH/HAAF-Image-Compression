@@ -171,9 +171,9 @@ void DecodeCu(
 		CODING_UNIT_HEIGHT);
 
 	///***** DECODING *****/
-	CopyDWordToDWordBuffer(
-		(int *)transformBestY,
-		transformStrideY >> 2,  // >> 2 because transformStrideY is in bytes!
+	CopyWordToDWordBuffer(
+		(short *)transformBestY,
+		transformStrideY >> 1,  // >> 1 because transformStrideY is in bytes!
 		transformBufferDWord,
 		CODING_UNIT_WIDTH,
 		CODING_UNIT_WIDTH,
@@ -211,9 +211,9 @@ void DecodeCu(
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1);
 		
-		CopyDWordToDWordBuffer(
-			(int *)transformBestU,
-			transformStrideU >> 2,   // >> 2 because transformStrideU is in bytes!
+		CopyWordToDWordBuffer(
+			(short *)transformBestU,
+			transformStrideU >> 1,   // >> 1 because transformStrideU is in bytes!
 			transformBufferDWord,
 			CODING_UNIT_WIDTH >> 1,
 			CODING_UNIT_WIDTH >> 1,
@@ -250,9 +250,9 @@ void DecodeCu(
 			CODING_UNIT_WIDTH >> 1, 
 			CODING_UNIT_HEIGHT >> 1);
 		
-		CopyDWordToDWordBuffer(
-			(int *)transformBestV,
-			transformStrideV >> 2, // >> 2 because transformStrideV is in bytes, we need dword
+		CopyWordToDWordBuffer(
+			(short *)transformBestV,
+			transformStrideV >> 1, // >> 2 because transformStrideV is in bytes, we need dword
 			transformBufferDWord,
 			CODING_UNIT_WIDTH >> 1,
 			CODING_UNIT_WIDTH >> 1,
@@ -435,6 +435,7 @@ void EncodeCu(
 	int uStride = inputPicture->uStride;
 	int vStride = inputPicture->vStride;
 
+	// TFC
 	// Transform Int Blocks (uses custom offset since it is in int space
 	BufferDescriptor_t *transformBestBuffer = &codingUnitStructure->transformBestBuffer;
 	int transformStrideY = transformBestBuffer->yStride;
@@ -529,11 +530,11 @@ void EncodeCu(
 	predictionModeCursor = codingUnitStructure->bestPredictionModes[cuIndex];
 	{
 		// Copy transform buffer into transform best buffer
-		CopyDWordToDWordBuffer(
+		CopyDWordToWordBuffer(
 			transformBufferDWord[codingUnitStructure->bestPredictionModes[cuIndex]], 
 			CODING_UNIT_WIDTH, 
-			(int *)transformBestY, 
-			transformStrideY >> 2,  // >> 2 because transformStrideY is in bytes!
+			(short *)transformBestY, 
+			transformStrideY >> 1,  // >> 1 because transformStrideY is in bytes!
 			CODING_UNIT_WIDTH, 
 			CODING_UNIT_HEIGHT);
 	
@@ -573,11 +574,11 @@ void EncodeCu(
 			Software);
 	
 		// Copy transform buffer into transform best buffer
-		CopyDWordToDWordBuffer(
+		CopyDWordToWordBuffer(
 			transformBufferDWord[predictionModeCursor], 
 			(CODING_UNIT_WIDTH >> 1), 
-			(int *)transformBestU, 
-			transformStrideU >> 2, // Stride is in Bytes, need dwords 
+			(short *)transformBestU, 
+			transformStrideU >> 1, // Stride is in Bytes, need dwords 
 			(CODING_UNIT_WIDTH >> 1), 
 			(CODING_UNIT_HEIGHT >> 1));
 
@@ -616,11 +617,11 @@ void EncodeCu(
 			Software);
 	
 		// Copy transform buffer into transform best buffer
-		CopyDWordToDWordBuffer(
+		CopyDWordToWordBuffer(
 			transformBufferDWord[predictionModeCursor], 
 			(CODING_UNIT_WIDTH >> 1), 
-			(int *)transformBestV, 
-			transformStrideV >> 2, // >> 2 because stride is in Bytes, we need dword
+			(short *)transformBestV, 
+			transformStrideV >> 1, // >> 2 because stride is in Bytes, we need dword
 			(CODING_UNIT_WIDTH >> 1), 
 			(CODING_UNIT_HEIGHT >> 1));
 
@@ -692,27 +693,14 @@ void GenerateBitstream(
 	Bitstream_t *outputBitstream)
 {
 	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
-	int saturatedCoeffsSize = (codingUnitStructure->transformBestBuffer.yuvSize >> 1);
-	short *saturatedCoeffs = (short *)malloc(sizeof(short) * saturatedCoeffsSize);
-	
-	{
-		int bufferCursor;
-		for(bufferCursor = 0; bufferCursor < (codingUnitStructure->transformBestBuffer.yuvSize >> 2); bufferCursor++)
-		{
-			saturatedCoeffs[bufferCursor] = ((int *)codingUnitStructure->transformBestBuffer.fullPicturePointer)[bufferCursor];
-		}
-
-	}
 
 	EncodeBitstream(
 		outputBitstream,
-		(unsigned char *)saturatedCoeffs,
-		saturatedCoeffsSize,
+		(unsigned char *)codingUnitStructure->transformBestBuffer.fullPicturePointer,
+		codingUnitStructure->transformBestBuffer.yuvSize,
 		codingUnitStructure->bestPredictionModes,
 		numCUs,
 		codingUnitStructure->widthPicture,
 		codingUnitStructure->heightPicture,
 		codingUnitStructure->qp);
-
-	free(saturatedCoeffs);
 }

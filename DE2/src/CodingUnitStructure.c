@@ -76,7 +76,7 @@ void CodingUnitStructureConstructor(
 		&codingUnitStructure->transformBestBuffer,
 		codingUnitStructure->widthPicture,
 		codingUnitStructure->heightPicture,
-		sizeof(int));
+		sizeof(short));
 	BufferDescriptorConstructor(
 		&codingUnitStructure->reconBestBuffer,
 		codingUnitStructure->widthPicture,

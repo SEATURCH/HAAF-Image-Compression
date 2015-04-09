@@ -28,9 +28,9 @@ int main(int argc, char* argv[])
 	// Input Arguments
 	const char *bitstreamFile;
 	const char *rawFile;
-	int pictureWidth;
-	int pictureHeight;
-	int qp;
+	int pictureWidth = -1;
+	int pictureHeight = -1;
+	int qp = -1;
 
 	FileType_t rawFileType;
 

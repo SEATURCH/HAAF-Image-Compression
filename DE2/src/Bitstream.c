@@ -99,6 +99,7 @@ void OpenBitstreamFromFile(
 	if(bitstreamFile == NULL)
 	{
 		printf("Couldn't open bitstream!\n");
+		return;
 	}
 
 	// Get total file size
@@ -110,6 +111,12 @@ void OpenBitstreamFromFile(
 
 	// Put bitstreamFile cursor back to beginning
 	fseek(bitstreamFile, 0, SEEK_SET);
+
+	if(fileSize == 0) 
+	{
+		printf("Empty file!\n");
+		return;
+	}
 
 	// Construct the bitstream based off the filesize
 	BitstreamConstructorMaxSize(

@@ -27,20 +27,22 @@ int main(int argc, char* argv[])
 
 	// Input Arguments
 	const char *bitstreamFile;
-	const char *yuvFile;
+	const char *rawFile;
 	int pictureWidth;
 	int pictureHeight;
 	int qp;
+
+	FileType_t rawFileType;
 
 	int ProcessingType = INVALID;
 
 	// Determine whether encoding or decoding by using number of arguments
 #if VS_BUILD
 	// Encoder Arguments:
-	// EncoderDecoder.exe inputYUVFile outputBitstreamFile width height QP
+	// EncoderDecoder.exe inputrawFile outputBitstreamFile width height QP
 #define NUM_ENC_ARGS	6
 	// Decoder Arguments:
-	// EncoderDecoder.exe inputBitstreamFile outputYUVFile
+	// EncoderDecoder.exe inputBitstreamFile outputrawFile
 #define NUM_DEC_ARGS	3
 	// Pi-DE2 Arguments:
 	// EncoderDecoder.exe outputHAAFFile
@@ -49,17 +51,23 @@ int main(int argc, char* argv[])
 	if(argc == NUM_ENC_ARGS) 
 	{
 		ProcessingType = ENCODE_PICTURE;
-		yuvFile = argv[1];
+		rawFile = argv[1];
 		bitstreamFile = argv[2];
 		pictureWidth = atoi(argv[3]);
 		pictureHeight = atoi(argv[4]);
 		qp = atoi(argv[5]);
+
+		// Not used
+		rawFileType = FileTypeYuv;
 	}
 	else if(argc == NUM_DEC_ARGS)
 	{
 		ProcessingType = DECODE_PICTURE;
 		bitstreamFile = argv[1];
-		yuvFile = argv[2];
+		rawFile = argv[2];
+
+		// Detect the extension in the rawFileName for output
+		rawFileType = GetFileType(rawFile);
 	}
 #if PI_BUILD
 	else if(argc == NUM_PI_ARGS)
@@ -71,10 +79,11 @@ int main(int argc, char* argv[])
 	else 
 	{
 		printf("Unknown number of arguments...\n");
-		printf("Encoder.exe inputYUVFile outputBitstreamFile width height QP\n");
-		printf("Decoder.exe inputBitstreamFile outputYUVFile\n");
+		printf("Encoder.exe inputrawFile outputBitstreamFile width height QP\n");
+		printf("Decoder.exe inputBitstreamFile outputrawFile\n");
 		return 0;
 	}
+
 
 // DE2 Build
 #elif N2_BUILD
@@ -149,10 +158,10 @@ int main(int argc, char* argv[])
 			DEFAULT_PICTURE_WIDTH, 
 			DEFAULT_PICTURE_HEIGHT);
 	#elif VS_BUILD
-		printf("Opening image from file: \'%s\'...\t", yuvFile);
+		printf("Opening image from file: \'%s\'...\t", rawFile);
 		OpenYUVFileIntoInputPicture(
 			&inputPicture, 
-			yuvFile, 
+			rawFile, 
 			pictureWidth, 
 			pictureHeight);
 		printf("Done!\n");
@@ -268,11 +277,28 @@ int main(int argc, char* argv[])
 		//Send(sendBuffer);
 		//printf("Send Done\n");
 #elif VS_BUILD
-		printf("Writing to file: \'%s\'...\t", yuvFile);
-		SaveYUVToFile(
-			yuvFile, 
-			&(codingUnitStructure.reconBestBuffer));
-		printf("Done!\n\n\n");
+		{
+			printf("Writing to file: \'%s\'...\t", rawFile);
+			
+			// If the file type is BMP, perform conversion
+			if(rawFileType == FileTypeBmp)
+			{
+				// Write file to Bitmap
+				SaveYUVtoBMP(
+					codingUnitStructure.reconBestBuffer.fullPicturePointer,
+					pictureWidth, 
+					pictureHeight, 
+					rawFile);
+			}
+			// Always save to .yuv in the non-bmp case
+			else
+			{
+				SaveYUVToFile(
+					rawFile, 
+					&(codingUnitStructure.reconBestBuffer));
+			}
+			printf("Done!\n\n\n");
+		}
 #endif
 
 

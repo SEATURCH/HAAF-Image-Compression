@@ -23,6 +23,13 @@ void Send(unsigned char* send);
 
 #endif
 
+
+typedef enum FileType_s {
+	NoFileType,
+	FileTypeYuv,
+	FileTypeBmp
+} FileType_t;
+
 void OpenYUVFileIntoInputPicture(
 	BufferDescriptor_t* inputPicture, 
 	const char* filename, 
@@ -52,9 +59,16 @@ void OpenReconBestIntoSerialYUV(
 	int width, 
 	int height);
 
+FileType_t GetFileType(const char *fileName);
+
 void SetYUVSamplesToValue(BufferDescriptor_t *inputPicture);
 
 
+void SaveYUVtoBMP(
+	unsigned char *yuvPtr,
+	int width,
+	int height,
+	const char *outputFileName);
 
 
 #endif

@@ -137,7 +137,7 @@ void DecodeBitstream(
 	unsigned char *headerPtr = inputBitstream->data;
 	unsigned char *encodedPMPtr = &(headerPtr[BITSTREAM_HEADER_LEN]);
 	unsigned char *lz4Ptr; // Determined after encoded predictionModesLen is found
-
+	
 	unsigned int lz4Length;
 	int numPredictionModes;
 	int numCUs = codingUnitStructure->numCusHeight * codingUnitStructure->numCusWidth;
@@ -160,12 +160,35 @@ void DecodeBitstream(
 		inputBitstream, 
 		&lz4Length);
 
-	// Decompress LZ4 into transform coefficients
-	LZ4IO_decompressArray(
-		lz4Ptr, 
-		lz4Length,
-		(unsigned char *) saturatedCoeffs,
-		saturatedCoeffsSize);
+	{
+		unsigned char *lz4Buffer;
+		int lz4BufferSize;
+		int decompSize = 0;
+
+		lz4Buffer = (unsigned char *) malloc(sizeof(unsigned char) * saturatedCoeffsSize);
+
+		do {
+			if(decompSize == 0) {
+				// Copy in lz4 into lz4Buffer
+				memcpy(lz4Buffer, lz4Ptr, lz4Length);
+				lz4BufferSize = lz4Length;
+			}
+			else {
+				memcpy(lz4Buffer, saturatedCoeffs, decompSize);
+				lz4BufferSize = decompSize;
+			}
+
+			// Decompress LZ4 into transform coefficients
+			decompSize = LZ4IO_decompressArray(
+				lz4Buffer, 
+				lz4BufferSize,
+				(unsigned char *) saturatedCoeffs,
+				saturatedCoeffsSize);
+
+		} while(decompSize != saturatedCoeffsSize);
+
+		free(lz4Buffer);
+	}
 
 	// Saturate short coeffs to int
 	{
@@ -385,6 +408,8 @@ void EncodeBitstream(
 	int encodedPMSize = 0;
 	int encodedLZ4Size;
 
+	int encodedLZ4MaxSize;
+
 	int compressionLevel = LZ4_COMPRESSION_LEVEL;
 
 	// Encode Prediction Modes
@@ -399,15 +424,44 @@ void EncodeBitstream(
 	// Determine lz4Ptr based off encodedPMLen
 	lz4Ptr = &(encodedPMPtr[encodedPMSize]);
 	encodedLZ4Size = outputBitstream->maxSize - encodedPMSize - BITSTREAM_HEADER_LEN;
+	encodedLZ4MaxSize = outputBitstream->maxSize - encodedPMSize - BITSTREAM_HEADER_LEN;
 	
-	// Encode transformCoeffs into lz4Ptr
-	LZ4IO_compressArray(
-		transformCoeffs, 
-		transformCoeffsSize,
-		lz4Ptr,
-		&encodedLZ4Size,
-		compressionLevel
-		);
+	{
+		unsigned char *inputBuffer;
+		int inputBufferSize;
+		int passCursor = 0;
+		
+		inputBuffer = (unsigned char *) malloc(sizeof(unsigned char) * transformCoeffsSize);
+
+		// Encode multiple passes to improve compression level
+		while(passCursor < LZ4_NUM_PASSES)
+		{
+			if(passCursor == 0) {
+				inputBufferSize = transformCoeffsSize;
+				memcpy(inputBuffer, transformCoeffs, inputBufferSize);
+			}
+			else {
+				inputBufferSize = encodedLZ4Size;
+				memcpy(inputBuffer, lz4Ptr, inputBufferSize);
+			}
+
+			encodedLZ4Size = encodedLZ4MaxSize;
+
+			// Encode transformCoeffs into lz4Ptr
+			LZ4IO_compressArray(
+				inputBuffer,
+				inputBufferSize,
+				lz4Ptr,
+				&encodedLZ4Size,
+				compressionLevel
+				);
+			//printf("EncodedLZ4Size[%d]: %d\n", passCursor, encodedLZ4Size);
+
+			passCursor++;
+		}
+
+		free(inputBuffer);
+	}
 
 	// With encodedLZ4 len now available, write header
 	WriteHeaderInfo(

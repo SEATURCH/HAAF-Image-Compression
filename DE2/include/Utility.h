@@ -39,8 +39,10 @@
 // LZ4
 #if N2_BUILD
 #define LZ4_COMPRESSION_LEVEL (0)
+#define LZ4_NUM_PASSES		  (1)
 #elif VS_BUILD
-#define LZ4_COMPRESSION_LEVEL (10)
+#define LZ4_COMPRESSION_LEVEL (8)
+#define LZ4_NUM_PASSES		  (2) // More than 2 passes does not further increase compression
 #endif
 
 /*** MACRO FUNCTIONS ***/

@@ -750,7 +750,7 @@ int LZ4IO_decompressArray(
 			);
         if (decodedSize != ENDOFSTREAM)
             filesize += decodedSize;
-    } while (filesize < outputStreamSize && decodedSize != ENDOFSTREAM);
+    } while (/*filesize < outputStreamSize && */decodedSize != ENDOFSTREAM);
 
     /* Final Status */
     end = clock();
@@ -766,6 +766,6 @@ int LZ4IO_decompressArray(
     ///fclose(foutput);
 
     /*  Error status = OK */
-    return 0;
+    return filesize;
 }
 

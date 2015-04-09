@@ -1,4 +1,4 @@
-all: Bitstream.o CodingUnitStructure.o Encode.o ImageCompression.o lz4io.o OpenPicture.o Open_Picture.o Prediction.o Quantize.o Transform.o Utility.o bcm2835.o lz4.o lz4frame.o lz4hc.o xxhash.o
+all: Bitstream.o CodingUnitStructure.o Encode.o ImageCompression.o lz4io.o OpenPicture.o CommunicationPi.o Prediction.o Quantize.o Transform.o Utility.o bcm2835.o lz4.o lz4frame.o lz4hc.o xxhash.o
 	gcc Bitstream.o CodingUnitStructure.o Encode.o ImageCompression.o lz4io.o OpenPicture.o Open_Picture.o Prediction.o Quantize.o Transform.o Utility.o bcm2835.o lz4.o lz4frame.o lz4hc.o xxhash.o -o ImageCompression
 ImageCompression.o: ImageCompression.c
 	gcc -c ImageCompression.c
@@ -28,8 +28,8 @@ lz4hc.o : ../include/lz4/lz4hc.c
 	gcc -c ../include/lz4/lz4hc.c
 xxhash.o : ../include/lz4/xxhash.c
 	gcc -c ../include/lz4/xxhash.c
-Open_Picture.o: Open_Picture.c
-	gcc -c Open_Picture.c
+CommunicationPi.o: CommunicationPi.c
+	gcc -c CommunicationPi.c
 bcm2835.o: /home/pi/bcm2835-1.39/src/bcm2835.c
 	gcc -c /home/pi/bcm2835-1.39/src/bcm2835.c
 clean:

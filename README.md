@@ -18,26 +18,26 @@ LZ4 Passes: 1
 
 #320x240, (113kB raw YUV420 input, 227kB raw BMP output):
 #  Low Entropy Image:
-  	lake_320x240.yuv (227kB raw BMP output)
+  	lake_320x240.yuv
   		QP0 : 42kB, 5.4 : 1
   		QP20: 25kB, 9.0 : 1
   		QP40: 18kB, 12.6 : 1
   
 #  Medium Entropy Image:
-  	house_320x240.yuv (227kB raw BMP output)
+  	house_320x240.yuv
   		QP0 : 90kB, 2.6 : 1
   		QP20: 56kB, 4.0 : 1
   		QP40: 38kB, 6.0 : 1
   
 #  High Entropy Image:
-  	feather_320x240.yuv (227kB raw BMP output)
+  	feather_320x240.yuv
   		QP0 : 122kB, 1.8 : 1
   		QP20: 94kB,  2.4 : 1
   		QP40: 77kB,  3.0 : 1
   
 #1280x720 (1350kB raw YUV420 input, 2700kB raw BMP output):
 #  High Entropy:
-  	catlarge_1280x720.yuv (2700kB raw BMP output)
+  	catlarge_1280x720.yuv
   		QP0 : 781kB, 3.4 : 1
   		QP20: 392kB, 6.8 : 1
   		QP40: 245kB, 11.0 : 1
